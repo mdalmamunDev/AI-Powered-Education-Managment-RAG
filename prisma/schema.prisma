@@ -1,0 +1,342 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────
+// Auth (staff/admin accounts — separate from Student/Teacher domain records)
+// ─────────────────────────────────────────────
+enum Role {
+  ADMIN
+  STAFF
+}
+
+model User {
+  id        Int      @id @default(autoincrement())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(STAFF)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Core academic structure
+// ─────────────────────────────────────────────
+model Department {
+  id               Int      @id @default(autoincrement())
+  departmentName   String   @unique
+  headOfDepartment String?
+  location         String?
+  phone            String?
+  teachers         Teacher[]
+  students         Student[]
+  courses          Course[]
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model Semester {
+  id           Int      @id @default(autoincrement())
+  semesterName String
+  startDate    DateTime
+  endDate      DateTime
+  academicYear String
+  courses      Course[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Teacher {
+  id               Int            @id @default(autoincrement())
+  firstName        String
+  lastName         String
+  email            String         @unique
+  phone            String?
+  hireDate         DateTime
+  specialization   String?
+  officeLocation   String?
+  departmentId     Int
+  department       Department     @relation(fields: [departmentId], references: [id])
+  courses          Course[]
+  assignments      Assignment[]
+  officeHours      OfficeHours[]
+  advisements      Advisement[]
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+}
+
+model Student {
+  id             Int               @id @default(autoincrement())
+  firstName      String
+  lastName       String
+  email          String            @unique
+  phone          String?
+  dateOfBirth    DateTime
+  address        String?
+  enrollmentDate DateTime          @default(now())
+  status         String            @default("ACTIVE")
+  departmentId   Int?
+  department     Department?       @relation(fields: [departmentId], references: [id])
+  enrollments    Enrollment[]
+  attendances    Attendance[]
+  grades         Grade[]
+  submissions    Submission[]
+  payments       Payment[]
+  guardians      StudentGuardian[]
+  advisements    Advisement[]
+  bookLoans      BookLoan[]
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+}
+
+model Course {
+  id            Int          @id @default(autoincrement())
+  courseCode    String       @unique
+  courseName    String
+  description   String?
+  creditHours   Int
+  maxCapacity   Int
+  teacherId     Int?
+  teacher       Teacher?     @relation(fields: [teacherId], references: [id])
+  departmentId  Int
+  department    Department   @relation(fields: [departmentId], references: [id])
+  semesterId    Int
+  semester      Semester     @relation(fields: [semesterId], references: [id])
+  enrollments   Enrollment[]
+  attendances   Attendance[]
+  grades        Grade[]
+  assignments   Assignment[]
+  schedules     Schedule[]
+  exams         Exam[]
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Enrollment, attendance, grading
+// ─────────────────────────────────────────────
+model Enrollment {
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  student        Student  @relation(fields: [studentId], references: [id])
+  courseId       Int
+  course         Course   @relation(fields: [courseId], references: [id])
+  enrollmentDate DateTime @default(now())
+  status         String   @default("ENROLLED")
+  finalGrade     Float?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([studentId, courseId])
+}
+
+model Attendance {
+  id              Int      @id @default(autoincrement())
+  studentId       Int
+  student         Student  @relation(fields: [studentId], references: [id])
+  courseId        Int
+  course          Course   @relation(fields: [courseId], references: [id])
+  attendanceDate  DateTime
+  status          String
+  remarks         String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Grade {
+  id             Int      @id @default(autoincrement())
+  studentId      Int
+  student        Student  @relation(fields: [studentId], references: [id])
+  courseId       Int
+  course         Course   @relation(fields: [courseId], references: [id])
+  score          Float
+  gradeLetter    String?
+  assessmentType String
+  dateRecorded   DateTime @default(now())
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Assignments & submissions
+// ─────────────────────────────────────────────
+model Assignment {
+  id          Int          @id @default(autoincrement())
+  courseId    Int
+  course      Course       @relation(fields: [courseId], references: [id])
+  teacherId   Int
+  teacher     Teacher      @relation(fields: [teacherId], references: [id])
+  title       String
+  description String?
+  dueDate     DateTime
+  totalPoints Int
+  submissions Submission[]
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+}
+
+model Submission {
+  id             Int      @id @default(autoincrement())
+  assignmentId   Int
+  assignment     Assignment @relation(fields: [assignmentId], references: [id])
+  studentId      Int
+  student        Student  @relation(fields: [studentId], references: [id])
+  submissionDate DateTime @default(now())
+  score          Float?
+  feedback       String?
+  filePath       String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@unique([assignmentId, studentId])
+}
+
+// ─────────────────────────────────────────────
+// Payments
+// ─────────────────────────────────────────────
+model Payment {
+  id            Int      @id @default(autoincrement())
+  studentId     Int
+  student       Student  @relation(fields: [studentId], references: [id])
+  amount        Decimal  @db.Decimal(10, 2)
+  paymentDate   DateTime @default(now())
+  paymentMethod String
+  semester      String
+  status        String   @default("PENDING")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Scheduling & facilities
+// ─────────────────────────────────────────────
+model Classroom {
+  id         Int        @id @default(autoincrement())
+  building   String
+  roomNumber String
+  capacity   Int
+  equipment  String?
+  schedules  Schedule[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+
+  @@unique([building, roomNumber])
+}
+
+model Schedule {
+  id          Int       @id @default(autoincrement())
+  courseId    Int
+  course      Course    @relation(fields: [courseId], references: [id])
+  classroomId Int
+  classroom   Classroom @relation(fields: [classroomId], references: [id])
+  dayOfWeek   String
+  startTime   DateTime  @db.Time
+  endTime     DateTime  @db.Time
+  semester    String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Exam {
+  id         Int      @id @default(autoincrement())
+  courseId   Int
+  course     Course   @relation(fields: [courseId], references: [id])
+  examType   String
+  examDate   DateTime
+  duration   DateTime @db.Time
+  location   String?
+  totalMarks Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Guardians, advising, office hours
+// ─────────────────────────────────────────────
+model ParentGuardian {
+  id           Int               @id @default(autoincrement())
+  firstName    String
+  lastName     String
+  relationship String
+  email        String?
+  phone        String?
+  occupation   String?
+  students     StudentGuardian[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+// Explicit join model: STUDENT and PARENT_GUARDIAN are many-to-many in the diagram
+// (a student can list several guardians; a guardian can be tied to several students)
+model StudentGuardian {
+  id         Int            @id @default(autoincrement())
+  studentId  Int
+  student    Student        @relation(fields: [studentId], references: [id])
+  guardianId Int
+  guardian   ParentGuardian @relation(fields: [guardianId], references: [id])
+  createdAt  DateTime       @default(now())
+
+  @@unique([studentId, guardianId])
+}
+
+model OfficeHours {
+  id        Int      @id @default(autoincrement())
+  teacherId Int
+  teacher   Teacher  @relation(fields: [teacherId], references: [id])
+  dayOfWeek String
+  startTime DateTime @db.Time
+  endTime   DateTime @db.Time
+  location  String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Advisement {
+  id          Int      @id @default(autoincrement())
+  studentId   Int
+  student     Student  @relation(fields: [studentId], references: [id])
+  teacherId   Int
+  teacher     Teacher  @relation(fields: [teacherId], references: [id])
+  meetingDate DateTime
+  topic       String?
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Library
+// ─────────────────────────────────────────────
+model LibraryBook {
+  id               Int        @id @default(autoincrement())
+  isbn             String     @unique
+  title            String
+  author           String
+  publisher        String?
+  publicationYear  Int?
+  category         String?
+  copiesAvailable  Int        @default(0)
+  loans            BookLoan[]
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
+}
+
+model BookLoan {
+  id           Int         @id @default(autoincrement())
+  bookId       Int
+  book         LibraryBook @relation(fields: [bookId], references: [id])
+  studentId    Int
+  student      Student     @relation(fields: [studentId], references: [id])
+  checkoutDate DateTime    @default(now())
+  dueDate      DateTime
+  returnDate   DateTime?
+  status       String      @default("BORROWED")
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
