@@ -2,3 +2,5 @@ node_modules
 dist
 .env
 *.log
+/prisma/migrations
+.$DB Diagram.drawio.bkp
