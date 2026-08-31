@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/globals';
+import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields } from '../../helpers/globals';
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
@@ -47,7 +47,7 @@ export const getGradeById = catchAsync(async (req: any, res: any) => {
 
 export const createGrade = catchAsync(async (req: any, res: any) => {
   const item = await prisma.grade.create({
-    data: req.body,
+    data: normalizeDateFields(req.body, ['dateRecorded']),
     include: { student: true, course: true },
   });
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Grade created successfully', data: item });
@@ -57,7 +57,7 @@ export const updateGrade = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   const item = await prisma.grade.update({
     where: { id },
-    data: req.body,
+    data: normalizeDateFields(req.body, ['dateRecorded']),
     include: { student: true, course: true },
   });
   sendResponse(res, { code: StatusCodes.OK, message: 'Grade updated successfully', data: item });

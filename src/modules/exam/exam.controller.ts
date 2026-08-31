@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/globals';
+import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields } from '../../helpers/globals';
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
@@ -47,7 +47,7 @@ export const getExamById = catchAsync(async (req: any, res: any) => {
 
 export const createExam = catchAsync(async (req: any, res: any) => {
   const item = await prisma.exam.create({
-    data: req.body,
+    data: normalizeDateFields(req.body, ['examDate']),
     include: { course: true },
   });
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Exam created successfully', data: item });
@@ -57,7 +57,7 @@ export const updateExam = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   const item = await prisma.exam.update({
     where: { id },
-    data: req.body,
+    data: normalizeDateFields(req.body, ['examDate']),
     include: { course: true },
   });
   sendResponse(res, { code: StatusCodes.OK, message: 'Exam updated successfully', data: item });

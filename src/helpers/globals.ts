@@ -40,6 +40,37 @@ export const buildPaginationMeta = (totalCount: number, page: number, limit: num
   itemsPerPage: limit,
 });
 
+// Normalizes date-like values before they reach Prisma.
+// - A bare "YYYY-MM-DD" (no time component) becomes an ISO timestamp at UTC
+//   midnight so the calendar date round-trips unchanged regardless of the
+//   server/client timezone.
+// - A full ISO-8601 string is parsed into a Date object.
+// - Anything else (already a Date, empty, or unparseable) is returned as-is so
+//   Prisma still performs its own validation/error reporting.
+export const toIsoDate = (value: any): any => {
+  if (value === undefined || value === null || value instanceof Date) return value;
+  if (typeof value !== 'string') return value;
+  const trimmed = value.trim();
+  // Date-only input, e.g. "2026-08-12" -> 2026-08-12T00:00:00.000Z
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) {
+    return new Date(`${trimmed}T00:00:00.000Z`);
+  }
+  const parsed = new Date(trimmed);
+  return Number.isNaN(parsed.getTime()) ? value : parsed;
+};
+
+// Copies an incoming request body and applies toIsoDate to a set of date
+// fields, so date-only values like "2026-08-12" are normalized to an explicit
+// UTC-midnight ISO timestamp before they reach Prisma. Absent/null fields are
+// left untouched; invalid values still flow through so Prisma reports them.
+export const normalizeDateFields = (body: any, fields: string[]): any => {
+  const data = { ...body };
+  for (const field of fields) {
+    if (data[field] !== undefined) data[field] = toIsoDate(data[field]);
+  }
+  return data;
+};
+
 export const formatError = (error: any) => {
   // Prisma unique constraint violation (e.g. duplicate email/ISBN/course code)
   if (error instanceof PrismaClientKnownRequestError && error.code === 'P2002') {

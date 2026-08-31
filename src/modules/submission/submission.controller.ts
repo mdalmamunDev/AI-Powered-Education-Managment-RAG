@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/globals';
+import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields } from '../../helpers/globals';
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
@@ -40,7 +40,7 @@ export const getSubmissionById = catchAsync(async (req: any, res: any) => {
 
 export const createSubmission = catchAsync(async (req: any, res: any) => {
   const item = await prisma.submission.create({
-    data: req.body,
+    data: normalizeDateFields(req.body, ['submissionDate']),
     include: { assignment: true, student: true },
   });
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Submission created successfully', data: item });
@@ -50,7 +50,7 @@ export const updateSubmission = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   const item = await prisma.submission.update({
     where: { id },
-    data: req.body,
+    data: normalizeDateFields(req.body, ['submissionDate']),
     include: { assignment: true, student: true },
   });
   sendResponse(res, { code: StatusCodes.OK, message: 'Submission updated successfully', data: item });

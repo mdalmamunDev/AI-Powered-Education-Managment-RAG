@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/globals';
+import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields } from '../../helpers/globals';
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
@@ -48,7 +48,7 @@ export const getPaymentById = catchAsync(async (req: any, res: any) => {
 
 export const createPayment = catchAsync(async (req: any, res: any) => {
   const item = await prisma.payment.create({
-    data: req.body,
+    data: normalizeDateFields(req.body, ['paymentDate']),
     include: { student: true },
   });
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Payment created successfully', data: item });
@@ -58,7 +58,7 @@ export const updatePayment = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   const item = await prisma.payment.update({
     where: { id },
-    data: req.body,
+    data: normalizeDateFields(req.body, ['paymentDate']),
     include: { student: true },
   });
   sendResponse(res, { code: StatusCodes.OK, message: 'Payment updated successfully', data: item });

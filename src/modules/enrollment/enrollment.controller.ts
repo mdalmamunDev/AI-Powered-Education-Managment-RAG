@@ -1,5 +1,5 @@
 import { StatusCodes } from 'http-status-codes';
-import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/globals';
+import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields } from '../../helpers/globals';
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
@@ -46,7 +46,7 @@ export const getEnrollmentById = catchAsync(async (req: any, res: any) => {
 
 export const createEnrollment = catchAsync(async (req: any, res: any) => {
   const item = await prisma.enrollment.create({
-    data: req.body,
+    data: normalizeDateFields(req.body, ['enrollmentDate']),
     include: { student: true, course: true },
   });
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Enrollment created successfully', data: item });
@@ -56,7 +56,7 @@ export const updateEnrollment = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   const item = await prisma.enrollment.update({
     where: { id },
-    data: req.body,
+    data: normalizeDateFields(req.body, ['enrollmentDate']),
     include: { student: true, course: true },
   });
   sendResponse(res, { code: StatusCodes.OK, message: 'Enrollment updated successfully', data: item });
