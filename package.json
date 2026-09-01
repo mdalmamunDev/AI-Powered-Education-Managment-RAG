@@ -10,7 +10,8 @@
     "prisma:generate": "prisma generate",
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
-    "lint": "tsc --noEmit"
+    "lint": "tsc --noEmit",
+    "rag-seed": "npx ts-node prisma/embed-seed.ts"
   },
   "prisma": { "seed": "ts-node prisma/seed.ts" },
   "license": "ISC",

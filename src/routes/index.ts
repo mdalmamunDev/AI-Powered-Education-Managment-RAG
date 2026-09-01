@@ -20,6 +20,7 @@ import { OfficeHourRoutes } from '../modules/office-hours/office-hours.routes';
 import { AdvisementRoutes } from '../modules/advisement/advisement.routes';
 import { LibraryBookRoutes } from '../modules/library-book/library-book.routes';
 import { BookLoanRoutes } from '../modules/book-loan/book-loan.routes';
+import { AssistantRoutes } from '../modules/assistant/assistant.routes';
 
 const router = express.Router();
 
@@ -45,6 +46,7 @@ const apiRoutes = [
   { path: '/advisements', route: AdvisementRoutes },
   { path: '/library-books', route: LibraryBookRoutes },
   { path: '/book-loans', route: BookLoanRoutes },
+  { path: '/assistant', route: AssistantRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

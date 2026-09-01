@@ -1,11 +1,26 @@
 generator client {
   provider = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  extensions = [vector]
 }
+
+
+model Embedding {
+  id         Int      @id @default(autoincrement())
+  sourceType String   // "course" | "assignment" | "advisement" | "libraryBook" | "submission"
+  sourceId   Int       // the id of the row it came from
+  content    String    // the raw text chunk that got embedded
+  embedding  Unsupported("vector(768)")
+  createdAt  DateTime @default(now())
+
+  @@index([sourceType, sourceId])
+}
+
 
 // ─────────────────────────────────────────────
 // Auth (staff/admin accounts — separate from Student/Teacher domain records)
