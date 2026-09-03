@@ -5,7 +5,7 @@ import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
 
 export const getAllAdvisements = catchAsync(async (req: any, res: any) => {
-  const { page, limit, skip, take } = getPagination(req.query);
+  const { page, limit, skip, take, sortBy = 'meetingDate', sortOrder = 'desc' } = getPagination(req.query);
   const search = req.query.search as string | undefined;
 
   const where = search
@@ -21,7 +21,7 @@ export const getAllAdvisements = catchAsync(async (req: any, res: any) => {
       where,
       skip,
       take,
-      orderBy: { meetingDate: 'desc' },
+      orderBy: { [sortBy]: sortOrder },
       include: { student: true, teacher: true },
     }),
     prisma.advisement.count({ where }),

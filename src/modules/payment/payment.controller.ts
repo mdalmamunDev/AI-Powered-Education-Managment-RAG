@@ -5,7 +5,7 @@ import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
 
 export const getAllPayments = catchAsync(async (req: any, res: any) => {
-  const { page, limit, skip, take } = getPagination(req.query);
+  const { page, limit, skip, take, sortBy = 'paymentDate', sortOrder = 'desc' } = getPagination(req.query);
   const search = req.query.search as string | undefined;
 
   const where = search
@@ -23,7 +23,7 @@ export const getAllPayments = catchAsync(async (req: any, res: any) => {
       where,
       skip,
       take,
-      orderBy: { paymentDate: 'desc' },
+      orderBy: { [sortBy]: sortOrder },
       include: { student: true },
     }),
     prisma.payment.count({ where }),

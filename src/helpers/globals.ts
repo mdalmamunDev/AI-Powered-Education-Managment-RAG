@@ -30,7 +30,9 @@ export const getPagination = (query: any) => {
   const page = Math.max(parseInt(query.page as string, 10) || 1, 1);
   const limit = Math.max(parseInt(query.limit as string, 10) || 10, 1);
   const skip = (page - 1) * limit;
-  return { page, limit, skip, take: limit };
+  const sortBy = query.sortBy as string | undefined;
+  const sortOrder = query.sortOrder as 'asc' | 'desc' | undefined;
+  return { page, limit, skip, take: limit, sortBy, sortOrder };
 };
 
 export const buildPaginationMeta = (totalCount: number, page: number, limit: number) => ({
