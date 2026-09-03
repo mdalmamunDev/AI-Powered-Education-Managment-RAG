@@ -19,9 +19,13 @@ Follows the same conventions as the ACES backend this was modeled after:
 npm install
 cp .env.example .env   # fill in DATABASE_URL and JWT_SECRET
 npx prisma migrate dev --name init
-npx prisma db seed      # creates admin@edu.com / Admin@123 + a sample department
+npx prisma db seed      # seeds the sample education data
 npm run dev
 ```
+
+### Seed data
+
+Seed records are grouped under `prisma/seed/` by domain. Add multiple records to the arrays in `academic.seed.ts`, `progress.seed.ts`, `operations.seed.ts`, `advising.seed.ts`, or `library.seed.ts`; the runner resolves their relationships and keeps reruns idempotent.
 
 ## Auth
 
