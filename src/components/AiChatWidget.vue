@@ -1,5 +1,5 @@
 <template>
-  <div class="ai-chat-widget">
+  <div class="ai-chat-widget" :class="{ 'is-open': open }">
     <!-- Floating launcher -->
     <button type="button" class="ai-launcher" :class="{ 'is-open': open }" @click="toggleOpen"
       :title="open ? 'Close AI assistant' : 'Chat with AI assistant'"
@@ -13,7 +13,7 @@
     </button>
 
     <!-- Chat panel -->
-    <transition name="ai-panel-pop">
+    <transition name="ai-panel-dock">
       <div v-if="open" class="ai-panel">
         <!-- Header -->
         <div class="ai-header" @mousemove="onGlow">
@@ -25,7 +25,7 @@
                 <span class="ai-bot-pulse"></span>
               </div>
               <div class="min-w-0 text-start">
-                <div class="text-white font-semibold leading-tight truncate">EduTech AI Assistant</div>
+                <div class="text-white font-semibold leading-tight truncate">EduTech AI </div>
                 <div class="ai-status-line text-xs opacity-90 leading-tight truncate">
                   <span class="ai-status-dot"></span> Online · Ask about your institution
                 </div>
@@ -211,6 +211,13 @@ export default {
 <style scoped>
 .ai-chat-widget {
   position: relative;
+  flex: 0 0 auto;
+  width: 0;
+  overflow: hidden;
+  transition: width 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.ai-chat-widget.is-open {
+  width: 24rem;
 }
 
 /* ---------- Launcher ---------- */
@@ -227,6 +234,14 @@ export default {
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: opacity 0.25s ease, transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+/* While the panel is docked open, the launcher steps aside (it would overlap
+   the panel's input bar); the header close button takes over. */
+.ai-launcher.is-open {
+  opacity: 0;
+  transform: scale(0.5) translateY(8px);
+  pointer-events: none;
 }
 
 .ai-launcher-core {
@@ -296,36 +311,55 @@ export default {
   50% { opacity: 0.4; transform: scale(0.85); }
 }
 
-/* ---------- Panel ---------- */
+/* ---------- Panel (docked to the right edge, pushes content left) ---------- */
 .ai-panel {
-  position: fixed;
-  right: 1.5rem;
-  bottom: 6rem;
-  z-index: 50;
-  width: 23.75rem;
-  max-width: calc(100vw - 2rem);
-  height: 33rem;
-  max-height: calc(100vh - 8rem);
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 24rem; /* fixed inner width so content never squishes while the rail animates */
+  height: 100%;
+  box-sizing: border-box;
   background: var(--bg-surface);
   border: 1px solid var(--border);
-  border-radius: 1rem;
-  box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+  border-radius: 0.5rem;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  transform-origin: bottom right;
+  transform-origin: right center;
 }
 
-.ai-panel-pop-enter-active {
-  transition: opacity 0.28s ease, transform 0.32s cubic-bezier(0.34, 1.56, 0.64, 1);
+.ai-panel-dock-enter-active {
+  transition: opacity 0.3s ease, transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
 }
-.ai-panel-pop-leave-active {
-  transition: opacity 0.18s ease, transform 0.2s ease;
+.ai-panel-dock-leave-active {
+  transition: opacity 0.2s ease, transform 0.24s ease;
 }
-.ai-panel-pop-enter-from,
-.ai-panel-pop-leave-to {
+.ai-panel-dock-enter-from {
   opacity: 0;
-  transform: translateY(12px) scale(0.92);
+  transform: translateX(36px);
+}
+.ai-panel-dock-leave-to {
+  opacity: 0;
+  transform: translateX(16px);
+}
+
+/* ---------- Small screens: overlay instead of squeezing the layout ---------- */
+@media (max-width: 1023.98px) {
+  .ai-chat-widget,
+  .ai-chat-widget.is-open {
+    width: 0;
+  }
+  .ai-panel {
+    position: fixed;
+    top: 1rem;
+    right: 1rem;
+    bottom: 1rem;
+    height: auto;
+    border-radius: 1rem;
+    width: min(23.75rem, calc(100vw - 2rem));
+    z-index: 50;
+    box-shadow: 0 16px 44px rgba(0, 0, 0, 0.22);
+  }
 }
 
 /* ---------- Header (cursor-tracked spotlight) ---------- */
