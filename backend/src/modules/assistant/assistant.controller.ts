@@ -3,10 +3,19 @@ import catchAsync from '../../helpers/catchAsync';
 import { sendResponse } from '../../helpers/globals';
 import { embed, chat } from '../../helpers/ollama';
 import { prisma } from '../../../prisma/prisma';
+import { tryAnalytics } from './queryBuilder/router';
 
 export const ask = catchAsync(async (req: any, res: any) => {
   const { question } = req.body;
 
+  // 1. Try structured analytics query first (fast, deterministic)
+  const analyticsResult = await tryAnalytics(question);
+  if (analyticsResult) {
+    sendResponse(res, { code: StatusCodes.OK, data: analyticsResult });
+    return;
+  }
+
+  // 2. Fall back to semantic RAG (embedding + vector search + LLM)
   const queryVector = await embed(question);
   const vectorLiteral = `[${queryVector.join(',')}]`;
 
