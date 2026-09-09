@@ -1,0 +1,295 @@
+/* ============================================================
+   Design tokens — Light (default) / Dark
+   Formal slate + blue palette for an education admin panel
+   ============================================================ */
+:root {
+    --bg-page: #e2dfdd;        /* page background */
+    --bg-surface: #f7f3ef;     /* cards, tables, modals */
+    --bg-surface-2: #f8fafc;   /* secondary surface */
+    --bg-inset: #faeedc;       /* table headers, wells */
+    --bg-grad: linear-gradient(180deg, #ffffff 0%, #fae3c2 100%);
+    --text-1: #111827;         /* primary text */
+    --text-2: #4b5563;         /* secondary/muted text */
+    --border: #e5e7eb;
+    --border-strong: #d1d5db;
+    --accent: #ffc56d;
+    --accent-2: #fca402;
+    --accent-soft: rgba(37, 99, 235, 0.08);
+    --hover: #f3f4f6;
+    --input-bg: #ffffff;
+    --input-border: #d1d5db;
+    --input-ph: #9ca3af;
+    --focus: #2563eb;
+    --glass: rgba(255, 255, 255, 0.65);
+    --shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="dark"] {
+    --bg-page: #000000;
+    --bg-surface: #181109;
+    --bg-surface-2: #372a1a;
+    --bg-inset: #0f172a;
+    --bg-grad: linear-gradient(180deg, #000a24 0%, #2c1f0e 100%);
+    --text-1: #f1f5f9;
+    --text-2: #94a3b8;
+    --border: #334155;
+    --border-strong: #475569;
+    --accent: #faab00;
+    --accent-2: #9c6600;
+    --accent-soft: rgba(59, 130, 246, 0.14);
+    --hover: #263449;
+    --input-bg: #0f172a;
+    --input-border: #334155;
+    --input-ph: #64748b;
+    --focus: #3b82f6;
+    --glass: rgba(30, 41, 59, 0.7);
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+
+body {
+    font-family: "Outfit";
+    background: var(--bg-page);
+    margin: 0;
+    /* optional: remove default margin */
+    min-height: 100vh;
+    color: var(--text-1);
+    transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.app-font {
+    font-family: "Poppins", sans-serif;
+    /* Always add a fallback */
+    font-weight: 500;
+    /* Medium weight */
+}
+
+/* ---------- Surfaces ---------- */
+.bg-1 {
+    background: var(--bg-surface);
+}
+
+.bg-2 {
+    background: var(--bg-inset);
+}
+
+.bg-3 {
+    background: var(--hover);
+}
+
+.bg-4 {
+    background: var(--accent-soft);
+}
+
+.bg-5 {
+    background: var(--accent);
+}
+
+.bg-g {
+    background: var(--bg-grad);
+}
+
+.bg-glass {
+    background: var(--glass);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--border);
+}
+/* ---------- Native controls & scrollbars ---------- */
+:root { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
+::selection { background: var(--accent-soft); color: var(--text-1); }
+
+* { scrollbar-width: thin; scrollbar-color: var(--border-strong) transparent; }
+*::-webkit-scrollbar { width: 8px; height: 8px; }
+*::-webkit-scrollbar-thumb { background: var(--border-strong); border-radius: 8px; }
+*::-webkit-scrollbar-track { background: transparent; }
+
+.hide-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* ---------- Form elements ---------- */
+.my-label {
+    display: block;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-2);
+    margin-bottom: 0.375rem;
+}
+
+.my-input,
+select.my-input,
+textarea.my-input {
+    width: 100%;
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-1);
+    border-radius: 0.5rem;
+    padding: 0.625rem 0.875rem;
+    font-size: 0.875rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.my-input::placeholder { color: var(--input-ph); }
+
+.my-input:focus {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 3px var(--accent-soft);
+}
+
+.my-input:disabled { opacity: 0.6; cursor: not-allowed; }
+
+input[type="checkbox"].my-check {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--accent);
+    border-radius: 0.25rem;
+}
+
+/* ---------- Table cells ---------- */
+.my-td {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-2) !important;
+    font-size: 0.875rem;
+    padding-left: 12px;
+}
+
+.my-td-1st {
+    padding: 1rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text-1) !important;
+    font-size: 0.875rem;
+    font-weight: 500;
+    text-align: left;
+    padding-left: 1.7rem;
+}
+
+.table-action {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 9999px;
+    border: 1px solid var(--border);
+    color: var(--text-1);
+    background: transparent;
+    transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.table-action:hover { background: var(--hover); border-color: var(--border-strong); }
+
+/* ---------- Icon buttons (header bell, theme toggle) ---------- */
+.theme-ring {
+    color: var(--text-1);
+    background: var(--bg-surface-2);
+    border: 1px solid var(--border);
+}
+
+
+/* ---------- Semantic helpers (theme-aware) ---------- */
+.text-main { color: var(--text-1); }
+.text-sub { color: var(--text-2); }
+.text-accent { color: var(--accent); }
+.text-light { color: var(--text-2); }
+.ts1 { color: var(--accent); }
+.on-color { color: #ffffff; }
+
+.bg-surface { background-color: var(--bg-surface); }
+.bg-surface-2 { background-color: var(--bg-surface-2); }
+.bg-accent { background-color: var(--accent); }
+.bg-hover:hover { background-color: var(--hover); }
+
+.border-theme { border-color: var(--border) !important; }
+.divide-theme > :not([hidden]) ~ :not([hidden]) { border-color: var(--border); }
+
+.theme-divider { background: var(--border-strong); }
+
+/* ---------- Buttons ---------- */
+.btn-g {
+    background: linear-gradient(180deg, var(--accent), var(--accent-2));
+    color: #ffffff;
+    border: none;
+}
+
+.btn-g:hover {
+    filter: brightness(1.08);
+}
+
+/* ---------- Muted-utility remaps (theme-aware instead of fixed grays) ----------
+   Components/pages written against the old dark theme use text-gray-300/400
+   and divide-gray-600 everywhere; remap them to tokens so both themes read. */
+.text-gray-200 { color: var(--text-2) !important; }
+.text-gray-300 { color: var(--text-2) !important; }
+.text-gray-400 { color: var(--text-2) !important; }
+
+.divide-gray-600 > :not([hidden]) ~ :not([hidden]) {
+    border-color: var(--border) !important;
+}
+
+.hover\:text-gray-300:hover { color: var(--text-2) !important; }
+
+/* Icons in the sidebar were authored as white glyphs for the legacy dark
+   theme; render them as dark glyphs in light mode. */
+html:not([data-theme="dark"]) .sidebar-item img,
+html:not([data-theme="dark"]) .logout-item img {
+    filter: brightness(0);
+}
+
+/* Auth illustrations use near-white (#F6F6F6) shapes that wash out on the
+   light page background — give them a soft shadow so they stay visible. */
+html:not([data-theme="dark"]) .auth-illustration {
+    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.18));
+}
+
+/* ---------- Ant Design (pagination + selects) theming ---------- */
+.ant-pagination-item a {
+    background: var(--bg-surface) !important;
+    color: var(--text-1) !important;
+    border-color: var(--border) !important;
+}
+
+.ant-pagination-item-active a {
+    color: #ffffff !important;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
+}
+
+.ant-pagination-options-quick-jumper,
+.ant-pagination-item-ellipsis,
+.ant-pagination-jump-prev .ant-pagination-item-link-icon,
+.ant-pagination-jump-next .ant-pagination-item-link-icon {
+    color: var(--text-2) !important;
+}
+
+.ant-pagination-item-link,
+.ant-pagination-prev .ant-pagination-item-link,
+.ant-pagination-next .ant-pagination-item-link {
+    background: var(--bg-surface) !important;
+    border-color: var(--border) !important;
+    color: var(--text-1) !important;
+}
+
+.ant-pagination-options .ant-select-selector {
+    background: var(--input-bg) !important;
+    border-color: var(--input-border) !important;
+    color: var(--text-1) !important;
+}
+
+.ant-select-dropdown {
+    background: var(--bg-surface) !important;
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
+}
+
+.ant-select-item { color: var(--text-1) !important; }
+.ant-select-item-option-active { background: var(--hover) !important; }
+.ant-select-item-option-selected { background: var(--accent-soft) !important; }
+
+.ant-pagination-options-quick-jumper input {
+    background: var(--input-bg);
+    border: 1px solid var(--input-border);
+    color: var(--text-1);
+}
+
