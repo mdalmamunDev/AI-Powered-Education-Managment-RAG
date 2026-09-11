@@ -22,7 +22,16 @@ function buildCatalogDescription(): string {
 
 // ── Extract structured query from natural language ──────────
 
-async function extractQuery(question: string): Promise<AnalyticsQuery> {
+// Renders prior turns as a labeled transcript so extraction and answer
+// formatting can resolve referents ("which one?", "and for the teachers?")
+// and stay consistent with the conversation.
+function buildTranscript(history: { role: string; content: string }[] = []): string {
+  return history
+    .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+    .join('\n');
+}
+
+async function extractQuery(question: string, history: { role: string; content: string }[] = []): Promise<AnalyticsQuery> {
   const catalogDesc = buildCatalogDescription();
 
   const systemPrompt =
@@ -54,9 +63,14 @@ async function extractQuery(question: string): Promise<AnalyticsQuery> {
     '- For "top N" questions, use sort + limit.\n\n' +
     'Respond with ONLY the JSON query, no explanation.';
 
+  const transcript = buildTranscript(history);
+  const userContent = transcript
+    ? `Previous conversation:\n${transcript}\n\nQuestion: ${question}`
+    : question;
+
   const result = await chatJson([
     { role: 'system', content: systemPrompt },
-    { role: 'user', content: question },
+    { role: 'user', content: userContent },
   ]);
 
   return result as AnalyticsQuery;
@@ -64,7 +78,12 @@ async function extractQuery(question: string): Promise<AnalyticsQuery> {
 
 // ── Format query result into natural language ────────────────
 
-async function formatAnswer(question: string, query: AnalyticsQuery, result: QueryResult): Promise<string> {
+async function formatAnswer(
+  question: string,
+  history: { role: string; content: string }[],
+  query: AnalyticsQuery,
+  result: QueryResult
+): Promise<string> {
   const systemPrompt =
     'You are a university assistant. Convert the following query result into a clear, concise natural language answer.\n\n' +
     'Rules:\n' +
@@ -75,7 +94,10 @@ async function formatAnswer(question: string, query: AnalyticsQuery, result: Que
     '- If the result is empty, say "No records found."\n' +
     '- Do not mention the query or database details.';
 
-  const userMessage = `Question: ${question}\nQuery: ${JSON.stringify(query)}\nResult: ${JSON.stringify(result.data)}`;
+  const transcript = buildTranscript(history);
+  const userMessage = transcript
+    ? `Previous conversation:\n${transcript}\n\nQuestion: ${question}\nQuery: ${JSON.stringify(query)}\nResult: ${JSON.stringify(result.data)}`
+    : `Question: ${question}\nQuery: ${JSON.stringify(query)}\nResult: ${JSON.stringify(result.data)}`;
 
   return await chat([
     { role: 'system', content: systemPrompt },
@@ -86,7 +108,8 @@ async function formatAnswer(question: string, query: AnalyticsQuery, result: Que
 // ── Public entry point ──────────────────────────────────────
 
 export async function tryAnalytics(
-  question: string
+  question: string,
+  history: { role: string; content: string }[] = []
 ): Promise<{ answer: string; sources: any[] } | null> {
   // 1. Classify
   const intent = await classify(question);
@@ -95,14 +118,14 @@ export async function tryAnalytics(
 
   try {
     // 2. Extract structured query
-    const query = await extractQuery(question);
+    const query = await extractQuery(question, history);
     console.log('query:', query);
 
     // 3. Compile & execute
     const result = await executeQuery(query);
     console.log('result:', result);
     // 4. Format answer
-    const answer = await formatAnswer(question, query, result);
+    const answer = await formatAnswer(question, history, query, result);
     console.log('answer:', answer);
 
     return {

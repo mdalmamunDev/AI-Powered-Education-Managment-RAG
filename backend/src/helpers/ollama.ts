@@ -20,6 +20,45 @@ export async function chat(messages: { role: string; content: string }[]) {
   return data.message.content;
 }
 
+// ── Multi-turn context support ───────────────────────────────
+
+// Rewrites the latest question into a standalone question so intent
+// classification, embedding, and retrieval can resolve pronouns/referents
+// ("and for the teachers?", "which one has the highest?") from earlier turns.
+// Returns the original question unchanged when there is no history to use or
+// the LLM call fails, so first messages are unaffected.
+export async function rewriteForSearch(
+  question: string,
+  history: { role: string; content: string }[]
+): Promise<string> {
+  if (!history || history.length === 0) return question;
+
+  try {
+    const transcript = history
+      .map((m) => `${m.role === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .join('\n');
+
+    const result = await chat([
+      {
+        role: 'system',
+        content:
+          'You rewrite the user\'s latest question into a single standalone question that includes all context needed to answer it without seeing the previous conversation. ' +
+          'Resolve any pronouns or implicit references using the conversation transcript. ' +
+          'Output ONLY the rewritten question with no preamble. If the question already stands alone, output it unchanged.',
+      },
+      {
+        role: 'user',
+        content: `Previous conversation:\n${transcript}\n\nLatest question: ${question}`,
+      },
+    ]);
+
+    const rewritten = (result || '').trim();
+    return rewritten.length > 2 ? rewritten : question;
+  } catch {
+    return question; // never break chat on rewrite failure
+  }
+}
+
 // ── JSON-mode helpers for the NL query engine ───────────────
 
 export async function chatJson(messages: { role: string; content: string }[]): Promise<any> {

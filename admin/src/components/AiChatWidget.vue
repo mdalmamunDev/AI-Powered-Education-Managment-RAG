@@ -126,6 +126,7 @@ export default {
           sources: [],
         },
       ],
+      history: [], // prior turns sent to the backend so follow-ups keep context
       suggestions: [
         "Top students by GPA",
         "Students with no attendance today",
@@ -152,6 +153,7 @@ export default {
       this.messages = [
         { role: "assistant", content: "Chat cleared. How can I help you?", sources: [] },
       ];
+      this.history = [];
       this.message = "";
       this.scrollToBottom();
     },
@@ -177,17 +179,25 @@ export default {
       this.httpReq({
         customUrl: "assistant/ask",
         method: "post",
-        data: { question: content },
+        data: { question: content, history: this.history },
         callback: (data) => {
+          const answer = data?.answer || "Sorry, I couldn't find an answer.";
+          // Keep prior turns in sync so follow-up questions carry context.
+          this.history.push({ role: "user", content });
+          this.history.push({ role: "assistant", content: answer });
+          this.history = this.history.slice(-16); // last 8 exchanges (16 turns)
           this.messages.push({
             role: "assistant",
-            content: data?.answer || "Sorry, I couldn't find an answer.",
+            content: answer,
             sources: data?.sources || [],
           });
           this.isLoading = false;
           this.scrollToBottom();
         },
         errorCallback: () => {
+          // Track the user's attempt so a retry still has the context.
+          this.history.push({ role: "user", content });
+          this.history = this.history.slice(-16);
           this.messages.push({
             role: "assistant",
             content: "I'm having trouble reaching the assistant right now. Please try again.",
