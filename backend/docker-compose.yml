@@ -22,6 +22,14 @@ services:
   #   volumes:
   #     - ollama_data:/root/.ollama
 
+  # BullMQ queue + Socket.IO chat progress backing store.
+  redis:
+    image: redis:7-alpine
+    container_name: rag-redis
+    restart: unless-stopped
+    ports:
+      - "6389:6379"
+
 volumes:
   postgres_data:
   # ollama_data:

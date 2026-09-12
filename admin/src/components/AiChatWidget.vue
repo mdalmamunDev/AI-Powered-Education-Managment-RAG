@@ -47,8 +47,8 @@
         <!-- Messages -->
         <div ref="messages" class="ai-messages overflow-y-auto">
           <transition-group name="ai-msg" tag="div" class="flex flex-col gap-2">
-            <div v-for="(msg, index) in messages" :key="index" class="flex gap-2"
-              :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
+            <div v-for="(msg, index) in visibleMessages" :key="index"
+              class="flex gap-2" :class="msg.role === 'user' ? 'justify-end' : 'justify-start'">
               <div v-if="msg.role !== 'user'" class="ai-avatar flex-shrink-0 w-8 h-8">
                 <i class="fa-solid fa-robot text-lg"></i>
               </div>
@@ -58,7 +58,7 @@
                   'ai-bubble rounded-2xl px-4 py-2.5 text-sm break-words leading-relaxed whitespace-pre-wrap',
                   msg.role === 'user' ? 'ai-bubble--user self-end' : 'ai-bubble--bot'
                 ]">
-                  {{ msg.content }}
+                  {{ msg.content }}<span v-if="msg.streaming" class="ai-stream-cursor"></span>
                 </div>
 
                 <span v-if="msg.role !== 'user' && msg.sources?.length" class="text-xs text-sub mt-1">
@@ -68,16 +68,17 @@
             </div>
           </transition-group>
 
-          <!-- Typing indicator -->
+          <!-- Typing / stage indicator -->
           <transition name="ai-msg">
-            <div v-if="isLoading" class="flex justify-start gap-2 items-center mt-2">
+            <div v-if="isChatLoading && !writing" class="flex justify-start gap-2 items-center mt-2">
               <div class="ai-avatar flex-shrink-0 w-8 h-8 ai-avatar--thinking">
                 <i class="fa-solid fa-robot text-lg"></i>
               </div>
-              <div class="ai-typing rounded-2xl px-4 py-2.5 flex items-center">
+              <div class="ai-typing rounded-2xl px-4 py-2.5 flex items-center gap-2">
                 <span class="ai-typing-dot"></span>
                 <span class="ai-typing-dot"></span>
                 <span class="ai-typing-dot"></span>
+                <span class="text-xs text-sub whitespace-nowrap">{{ stageText || 'Thinking…' }}</span>
               </div>
             </div>
           </transition>
@@ -86,7 +87,7 @@
         <!-- Quick suggestions -->
         <div v-if="suggestions.length" class="ai-suggestions overflow-x-auto">
           <button v-for="(suggestion, index) in suggestions" :key="index" type="button"
-            class="ai-suggestion ai-glow" @mousemove="onGlow" :disabled="isLoading"
+            class="ai-suggestion ai-glow" @mousemove="onGlow" :disabled="isChatLoading"
             @click="sendMessage(suggestion)">
             {{ suggestion }}
           </button>
@@ -96,10 +97,10 @@
         <div class="ai-inputbar flex items-end gap-2 p-2.5">
           <textarea v-model="message" rows="1" class="ai-input" placeholder="Ask anything..."
             @keydown.enter.exact.prevent="onEnter" @keydown.shift.enter.exact="onShiftEnter"
-            :disabled="isLoading"></textarea>
+            :disabled="isChatLoading"></textarea>
           <button type="button" class="ai-send ai-glow" @mousemove="onGlow"
-            :class="{ 'is-active': message.trim() && !isLoading }"
-            :disabled="isLoading || !message.trim()" @click="sendMessage()"
+            :class="{ 'is-active': message.trim() && !isChatLoading }"
+            :disabled="isChatLoading || !message.trim()" @click="sendMessage()"
             title="Send message" aria-label="Send message">
             <i class="fa-solid fa-paper-plane"></i>
           </button>
@@ -110,6 +111,9 @@
 </template>
 
 <script>
+import { getSocket } from '@/plugins/socket';
+
+
 export default {
   name: "AiChatWidget",
   data() {
@@ -117,7 +121,14 @@ export default {
       open: false,
       hasUnread: true,
       message: "",
-      isLoading: false,
+      isChatLoading: false,
+      streaming: false, // answer tokens are currently streaming in
+      writing: false, // becomes true once tokens start flowing -> hide the thinking bubble
+      stageText: "", // human-readable stage shown to the user
+      queuePosition: 0,
+      requestId: null, // matches socket events back to this request
+      pendingUserContent: "",
+      socket: null,
       messages: [
         {
           role: "assistant",
@@ -136,6 +147,28 @@ export default {
     };
   },
   methods: {
+    connectSocket() {
+      if (this.socket) return;
+      this.socket = getSocket();
+      this.socket.on("chat:progress", this.onChatProgress);
+      this.socket.on("chat:token", this.onChatToken);
+      this.socket.on("chat:done", this.onChatDone);
+      this.socket.on("chat:error", this.onChatError);
+    },
+    disconnectSocket() {
+      if (this.socket) {
+        this.socket.off("chat:progress", this.onChatProgress);
+        this.socket.off("chat:token", this.onChatToken);
+        this.socket.off("chat:done", this.onChatDone);
+        this.socket.off("chat:error", this.onChatError);
+        this.socket.disconnect();
+        this.socket = null;
+      }
+    },
+    // Ignore socket events belonging to an older request.
+    isMine(payload = {}) {
+      return !this.requestId || !payload.requestId || payload.requestId === this.requestId;
+    },
     onGlow(e) {
       const el = e.currentTarget;
       const rect = el.getBoundingClientRect();
@@ -155,10 +188,14 @@ export default {
       ];
       this.history = [];
       this.message = "";
+      this.isChatLoading = false;
+      this.streaming = false;
+      this.writing = false;
+      this.stageText = "";
       this.scrollToBottom();
     },
     onEnter() {
-      if (this.isLoading) return;
+      if (this.isChatLoading) return;
       this.sendMessage();
     },
     onShiftEnter(event) {
@@ -169,44 +206,116 @@ export default {
     },
     sendMessage(quickText = false) {
       const content = (quickText || this.message || "").trim();
-      if (!content || this.isLoading) return;
+      if (!content || this.isChatLoading) return;
 
       this.messages.push({ role: "user", content, sources: [] });
       this.message = "";
-      this.isLoading = true;
+      this.isChatLoading = true;
+      this.streaming = true;
+      this.writing = false;
+      this.stageText = "Queuing your question…";
+      this.queuePosition = 0;
+      this.pendingUserContent = content;
+      this.requestId = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+      // Placeholder assistant bubble that fills with the streamed answer.
+      this.messages.push({ role: "assistant", content: "", sources: [], streaming: true });
+
+      this.connectSocket();
       this.scrollToBottom();
 
       this.httpReq({
         customUrl: "assistant/ask",
         method: "post",
-        data: { question: content, history: this.history },
+        data: { question: content, history: this.history, requestId: this.requestId },
         callback: (data) => {
-          const answer = data?.answer || "Sorry, I couldn't find an answer.";
-          // Keep prior turns in sync so follow-up questions carry context.
-          this.history.push({ role: "user", content });
-          this.history.push({ role: "assistant", content: answer });
-          this.history = this.history.slice(-16); // last 8 exchanges (16 turns)
-          this.messages.push({
-            role: "assistant",
-            content: answer,
-            sources: data?.sources || [],
-          });
-          this.isLoading = false;
-          this.scrollToBottom();
+          if (!data) return;
+          if (data.position) this.queuePosition = data.position;
+          if (data.requestId) this.requestId = data.requestId;
+          this.stageText = this.stageLabel("queued");
         },
-        errorCallback: () => {
-          // Track the user's attempt so a retry still has the context.
-          this.history.push({ role: "user", content });
-          this.history = this.history.slice(-16);
-          this.messages.push({
-            role: "assistant",
-            content: "I'm having trouble reaching the assistant right now. Please try again.",
-            sources: [],
-          });
-          this.isLoading = false;
-          this.scrollToBottom();
+        errorCallback: (errData) => {
+          const msg =
+            errData?.message ||
+            "I'm having trouble reaching the assistant right now. Please try again.";
+          this.failChat(msg);
         },
       });
+    },
+    stageLabel(stage) {
+      const labels = {
+        queued: this.queuePosition
+          ? `Waiting in queue (position ${this.queuePosition})…`
+          : "Waiting in queue…",
+        rewriting: "Rewriting your question…",
+        understanding: "Understanding your question…",
+        querying: "Querying the database…",
+        searching: "Searching the knowledge base…",
+        generating: "Generating answer…",
+        done: "",
+      };
+      return labels[stage] || "Processing…";
+    },
+    onChatProgress(payload = {}) {
+      if (!this.isChatLoading || !this.isMine(payload)) return;
+      if (typeof payload.position === "number") this.queuePosition = payload.position;
+      this.stageText = this.stageLabel(payload.stage);
+      // The moment it starts generating, switch from the thinking bubble to
+      // the writing bubble (the streamed answer).
+      if (payload.stage === "generating") this.writing = true;
+    },
+    onChatToken(payload = {}) {
+      if (!this.streaming || !this.isMine(payload)) return;
+      this.writing = true; // writing has begun -> hide the thinking bubble
+      const last = this.messages[this.messages.length - 1];
+      if (last && last.role === "assistant" && last.streaming) {
+        last.content += payload.token || "";
+        this.scrollToBottom();
+      }
+    },
+    onChatDone(payload = {}) {
+      if (!this.streaming || !this.isMine(payload)) return;
+      const answer = payload.answer || "Sorry, I couldn't find an answer.";
+      this.finalizeAssistant(answer, payload.sources || []);
+      // Keep prior turns in sync so follow-up questions carry context.
+      this.history.push({ role: "user", content: this.pendingUserContent });
+      this.history.push({ role: "assistant", content: answer });
+      this.history = this.history.slice(-16); // last 8 exchanges (16 turns)
+      this.streaming = false;
+      this.writing = false;
+      this.isChatLoading = false;
+      this.stageText = "";
+      this.scrollToBottom();
+    },
+    onChatError(payload = {}) {
+      if (!this.streaming || !this.isMine(payload)) return;
+      this.failChat(payload.message || "Sorry, something went wrong. Please try again.");
+    },
+    failChat(message) {
+      // Track the user's attempt so a retry still has the context.
+      this.history.push({ role: "user", content: this.pendingUserContent });
+      this.history = this.history.slice(-16);
+      this.finalizeAssistant(message, []);
+      this.streaming = false;
+      this.writing = false;
+      this.isChatLoading = false;
+      this.stageText = "";
+      this.scrollToBottom();
+    },
+    finalizeAssistant(content, sources) {
+      const last = this.messages[this.messages.length - 1];
+      if (last && last.role === "assistant" && last.streaming) {
+        last.content = content;
+        last.sources = sources || [];
+        last.streaming = false;
+      } else {
+        this.messages.push({
+          role: "assistant",
+          content,
+          sources: sources || [],
+          streaming: false,
+        });
+      }
     },
     scrollToBottom() {
       this.$nextTick(() => {
@@ -214,6 +323,16 @@ export default {
         if (area) area.scrollTop = area.scrollHeight;
       });
     },
+  },
+  computed: {
+    // The empty streaming placeholder bubble stays hidden while the AI is
+    // still thinking; it only appears once writing (tokens) has started.
+    visibleMessages() {
+      return this.messages.filter((m) => !m.streaming || this.writing);
+    },
+  },
+  beforeUnmount() {
+    this.disconnectSocket();
   },
 };
 </script>
@@ -622,5 +741,19 @@ export default {
 .ai-send:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* Blinking cursor shown while the answer is streaming in */
+.ai-stream-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-left: 2px;
+  vertical-align: -0.15em;
+  background: var(--accent);
+  animation: ai-cursor-blink 1s steps(2, start) infinite;
+}
+@keyframes ai-cursor-blink {
+  to { visibility: hidden; }
 }
 </style>

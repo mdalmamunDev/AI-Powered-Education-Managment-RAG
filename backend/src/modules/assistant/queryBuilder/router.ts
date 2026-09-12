@@ -5,9 +5,10 @@
 // the question is not analytics or the pipeline fails.
 // ─────────────────────────────────────────────────────────────
 
-import { chat, chatJson, classify } from '../../../helpers/ollama';
+import { chatJson, classify, chatStream } from '../../../helpers/ollama';
 import { executeQuery, AnalyticsQuery, QueryResult, QueryValidationError } from './compiler';
 import { CATALOG } from './catalog';
+import { ChatProgress } from '../progress';
 
 // ── Catalog description for the extraction prompt ───────────
 
@@ -82,7 +83,8 @@ async function formatAnswer(
   question: string,
   history: { role: string; content: string }[],
   query: AnalyticsQuery,
-  result: QueryResult
+  result: QueryResult,
+  onToken?: (token: string) => void
 ): Promise<string> {
   const systemPrompt =
     'You are a university assistant. Convert the following query result into a clear, concise natural language answer.\n\n' +
@@ -99,33 +101,41 @@ async function formatAnswer(
     ? `Previous conversation:\n${transcript}\n\nQuestion: ${question}\nQuery: ${JSON.stringify(query)}\nResult: ${JSON.stringify(result.data)}`
     : `Question: ${question}\nQuery: ${JSON.stringify(query)}\nResult: ${JSON.stringify(result.data)}`;
 
-  return await chat([
-    { role: 'system', content: systemPrompt },
-    { role: 'user', content: userMessage },
-  ]);
+  return await chatStream(
+    [
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: userMessage },
+    ],
+    onToken
+  );
 }
 
 // ── Public entry point ──────────────────────────────────────
 
 export async function tryAnalytics(
   question: string,
-  history: { role: string; content: string }[] = []
+  history: { role: string; content: string }[] = [],
+  progress?: ChatProgress
 ): Promise<{ answer: string; sources: any[] } | null> {
   // 1. Classify
+  progress?.stage('understanding');
   const intent = await classify(question);
   console.log('intent:', intent);
   if (intent !== 'analytics') return null;
 
   try {
     // 2. Extract structured query
+    progress?.stage('querying');
     const query = await extractQuery(question, history);
     console.log('query:', query);
 
     // 3. Compile & execute
     const result = await executeQuery(query);
     console.log('result:', result);
-    // 4. Format answer
-    const answer = await formatAnswer(question, history, query, result);
+
+    // 4. Format answer (streamed to the user)
+    progress?.stage('generating');
+    const answer = await formatAnswer(question, history, query, result, progress?.token);
     console.log('answer:', answer);
 
     return {

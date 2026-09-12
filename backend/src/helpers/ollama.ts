@@ -20,6 +20,53 @@ export async function chat(messages: { role: string; content: string }[]) {
   return data.message.content;
 }
 
+// Streamed generation: Ollama returns one NDJSON object per line, we forward
+// each content token as it arrives (default Ollama tokenizer granularity)
+// and accumulate the full answer.
+export async function chatStream(
+  messages: { role: string; content: string }[],
+  onToken?: (token: string) => void
+): Promise<string> {
+  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
+    method: 'POST',
+    body: JSON.stringify({ model: OLLAMA_CHAT_MODEL, messages, stream: true }),
+  });
+  if (!res.ok || !res.body) throw new Error(`Ollama chat stream failed: ${res.status}`);
+
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let buffer = '';
+  let full = '';
+
+  const flushLine = (line: string) => {
+    const trimmed = line.trim();
+    if (!trimmed) return;
+    try {
+      const data = JSON.parse(trimmed);
+      const token: string = data?.message?.content ?? '';
+      if (token) {
+        full += token;
+        onToken?.(token);
+      }
+    } catch {
+      // Skip incomplete/irrelevant lines.
+    }
+  };
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() ?? '';
+    for (const line of lines) flushLine(line);
+  }
+  buffer += decoder.decode(); // flush any trailing bytes
+  if (buffer.trim()) flushLine(buffer);
+
+  return full;
+}
+
 // ── Multi-turn context support ───────────────────────────────
 
 // Rewrites the latest question into a standalone question so intent
