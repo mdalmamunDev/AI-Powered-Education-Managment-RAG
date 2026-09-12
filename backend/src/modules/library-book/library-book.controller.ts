@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllLibraryBooks = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'title', sortOrder = 'asc' } = getPagination(req.query);
@@ -49,6 +50,7 @@ export const createLibraryBook = catchAsync(async (req: any, res: any) => {
   const item = await prisma.libraryBook.create({
     data: req.body,
   });
+  await safeEnqueueEmbedding('libraryBook', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'LibraryBook created successfully', data: item });
 });
 
@@ -58,11 +60,13 @@ export const updateLibraryBook = catchAsync(async (req: any, res: any) => {
     where: { id },
     data: req.body,
   });
+  await safeEnqueueEmbedding('libraryBook', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'LibraryBook updated successfully', data: item });
 });
 
 export const deleteLibraryBook = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.libraryBook.delete({ where: { id } });
+  await deleteEmbeddings('libraryBook', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'LibraryBook deleted successfully' });
 });

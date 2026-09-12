@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllOfficeHours = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'dayOfWeek', sortOrder = 'asc' } = getPagination(req.query);
@@ -50,6 +51,7 @@ export const createOfficeHour = catchAsync(async (req: any, res: any) => {
     data: req.body,
     include: { teacher: true },
   });
+  await safeEnqueueEmbedding('officeHours', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'OfficeHour created successfully', data: item });
 });
 
@@ -60,11 +62,13 @@ export const updateOfficeHour = catchAsync(async (req: any, res: any) => {
     data: req.body,
     include: { teacher: true },
   });
+  await safeEnqueueEmbedding('officeHours', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'OfficeHour updated successfully', data: item });
 });
 
 export const deleteOfficeHour = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.officeHours.delete({ where: { id } });
+  await deleteEmbeddings('officeHours', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'OfficeHour deleted successfully' });
 });

@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllDepartments = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'createdAt', sortOrder = 'desc' } = getPagination(req.query);
@@ -48,6 +49,7 @@ export const createDepartment = catchAsync(async (req: any, res: any) => {
   const item = await prisma.department.create({
     data: req.body,
   });
+  await safeEnqueueEmbedding('department', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Department created successfully', data: item });
 });
 
@@ -57,11 +59,13 @@ export const updateDepartment = catchAsync(async (req: any, res: any) => {
     where: { id },
     data: req.body,
   });
+  await safeEnqueueEmbedding('department', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'Department updated successfully', data: item });
 });
 
 export const deleteDepartment = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.department.delete({ where: { id } });
+  await deleteEmbeddings('department', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'Department deleted successfully' });
 });

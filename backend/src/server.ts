@@ -3,6 +3,8 @@ import app from './app';
 import { initSocket } from './helpers/socket';
 import { startChatWorker } from './modules/assistant/worker';
 import { chatQueue, connection } from './modules/assistant/queue';
+import { startEmbeddingWorker } from './modules/embedding/worker';
+import { embeddingQueue, connection as embeddingConnection } from './modules/embedding/queue';
 import { prisma } from '../prisma/prisma';
 
 const PORT = parseInt(process.env.PORT || '5000', 10);
@@ -19,6 +21,11 @@ initSocket(server);
 const chatWorker = startChatWorker();
 console.log('[chat] BullMQ worker started (concurrency 1 — one chat at a time)');
 
+// Create/update vectorization: one embedding job at a time, so re-indexing on
+// create/update never fights the chat worker for the same Ollama.
+const embeddingWorker = startEmbeddingWorker();
+console.log('[embedding] BullMQ worker started (concurrency 1 — auto-vectorize on create/update)');
+
 process.on('unhandledRejection', (err: any) => {
   console.error('Unhandled Rejection:', err);
 });
@@ -31,8 +38,11 @@ async function shutdown(signal: string) {
   console.log(`\n[server] ${signal} received, shutting down…`);
   try {
     await chatWorker.close();
+    await embeddingWorker.close();
     await chatQueue.close();
+    await embeddingQueue.close();
     connection.disconnect(true);
+    embeddingConnection.disconnect(true);
     await prisma.$disconnect();
   } catch (err) {
     console.error('[server] error during shutdown:', err);

@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields }
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllAdvisements = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'meetingDate', sortOrder = 'desc' } = getPagination(req.query);
@@ -49,6 +50,7 @@ export const createAdvisement = catchAsync(async (req: any, res: any) => {
     data: normalizeDateFields(req.body, ['meetingDate']),
     include: { student: true, teacher: true },
   });
+  await safeEnqueueEmbedding('advisement', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Advisement created successfully', data: item });
 });
 
@@ -59,11 +61,13 @@ export const updateAdvisement = catchAsync(async (req: any, res: any) => {
     data: normalizeDateFields(req.body, ['meetingDate']),
     include: { student: true, teacher: true },
   });
+  await safeEnqueueEmbedding('advisement', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'Advisement updated successfully', data: item });
 });
 
 export const deleteAdvisement = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.advisement.delete({ where: { id } });
+  await deleteEmbeddings('advisement', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'Advisement deleted successfully' });
 });

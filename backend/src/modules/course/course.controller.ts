@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta } from '../../helpers/
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllCourses = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'courseCode', sortOrder = 'asc' } = getPagination(req.query);
@@ -50,6 +51,7 @@ export const createCourse = catchAsync(async (req: any, res: any) => {
     data: req.body,
     include: { teacher: true, department: true, semester: true },
   });
+  await safeEnqueueEmbedding('course', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Course created successfully', data: item });
 });
 
@@ -60,11 +62,13 @@ export const updateCourse = catchAsync(async (req: any, res: any) => {
     data: req.body,
     include: { teacher: true, department: true, semester: true },
   });
+  await safeEnqueueEmbedding('course', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'Course updated successfully', data: item });
 });
 
 export const deleteCourse = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.course.delete({ where: { id } });
+  await deleteEmbeddings('course', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'Course deleted successfully' });
 });

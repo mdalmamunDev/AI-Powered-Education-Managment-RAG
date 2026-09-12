@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta, normalizeDateFields }
 import catchAsync from '../../helpers/catchAsync';
 import ApiError from '../../helpers/ApiError';
 import { prisma } from '../../../prisma/prisma';
+import { safeEnqueueEmbedding, deleteEmbeddings } from '../embedding/helper';
 
 export const getAllAssignments = catchAsync(async (req: any, res: any) => {
   const { page, limit, skip, take, sortBy = 'dueDate', sortOrder = 'asc' } = getPagination(req.query);
@@ -49,6 +50,7 @@ export const createAssignment = catchAsync(async (req: any, res: any) => {
     data: normalizeDateFields(req.body, ['dueDate']),
     include: { course: true, teacher: true },
   });
+  await safeEnqueueEmbedding('assignment', item.id, item);
   sendResponse(res, { code: StatusCodes.CREATED, message: 'Assignment created successfully', data: item });
 });
 
@@ -59,11 +61,13 @@ export const updateAssignment = catchAsync(async (req: any, res: any) => {
     data: normalizeDateFields(req.body, ['dueDate']),
     include: { course: true, teacher: true },
   });
+  await safeEnqueueEmbedding('assignment', item.id, item);
   sendResponse(res, { code: StatusCodes.OK, message: 'Assignment updated successfully', data: item });
 });
 
 export const deleteAssignment = catchAsync(async (req: any, res: any) => {
   const id = Number(req.params.id);
   await prisma.assignment.delete({ where: { id } });
+  await deleteEmbeddings('assignment', id);
   sendResponse(res, { code: StatusCodes.OK, message: 'Assignment deleted successfully' });
 });
