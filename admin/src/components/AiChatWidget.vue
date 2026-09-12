@@ -257,6 +257,7 @@ export default {
       return labels[stage] || "Processing…";
     },
     onChatProgress(payload = {}) {
+      console.log("onChatProgress:",payload);
       if (!this.isChatLoading || !this.isMine(payload)) return;
       if (typeof payload.position === "number") this.queuePosition = payload.position;
       this.stageText = this.stageLabel(payload.stage);
@@ -265,6 +266,7 @@ export default {
       if (payload.stage === "generating") this.writing = true;
     },
     onChatToken(payload = {}) {
+      console.log("onChatToken:",payload);
       if (!this.streaming || !this.isMine(payload)) return;
       this.writing = true; // writing has begun -> hide the thinking bubble
       const last = this.messages[this.messages.length - 1];
@@ -274,6 +276,7 @@ export default {
       }
     },
     onChatDone(payload = {}) {
+      console.log("onChatDone:",payload);
       if (!this.streaming || !this.isMine(payload)) return;
       const answer = payload.answer || "Sorry, I couldn't find an answer.";
       this.finalizeAssistant(answer, payload.sources || []);
@@ -288,6 +291,7 @@ export default {
       this.scrollToBottom();
     },
     onChatError(payload = {}) {
+      console.log("onChatError:",payload);
       if (!this.streaming || !this.isMine(payload)) return;
       this.failChat(payload.message || "Sorry, something went wrong. Please try again.");
     },

@@ -36,7 +36,15 @@ async function processChatJob(
   const analyticsResult = await tryAnalytics(searchQuestion, sanitized, progress);
   if (analyticsResult) {
     progress.stage('done');
-    emit('chat:done', { answer: analyticsResult.answer, sources: analyticsResult.sources });
+    emit('chat:done', {
+      answer: analyticsResult.answer,
+      sources: analyticsResult.sources,
+      decode: {
+        "step_1:sanitized": sanitized,
+        "step_2:searchQuestion": searchQuestion,
+        "step_3:analyticsResult": analyticsResult
+      }
+    });
     return;
   }
 
@@ -67,7 +75,18 @@ async function processChatJob(
   const answer = await chatStream(messages, (token) => progress.token(token));
 
   progress.stage('done');
-  emit('chat:done', { answer, sources: matches });
+  emit('chat:done', {
+    answer,
+    sources: matches,
+    decode: {
+      "step_1:sanitized": sanitized,
+      "step_2:searchQuestion": searchQuestion,
+      "step_3:analyticsResult": analyticsResult,
+      "step_4:queryVector": queryVector,
+      "step_5:matches": matches,
+      "step_6:answer": answer
+    }
+  });
 }
 
 export function startChatWorker() {

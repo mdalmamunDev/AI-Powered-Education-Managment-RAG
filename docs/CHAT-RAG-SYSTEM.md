@@ -36,7 +36,7 @@ answer** with real-time **Socket.IO stage updates**.
             ▼                         │      │            │                       │        │
   live events ◀──────────────────────┼──────┘            ▼                       ▼        |
   • chat:progress                     │              ┌───────────┐      ┌──────────────────┐   
-  • chat:token    ◀──────────────────┼──────────────│  Ollama   │      │ Postgre          │
+  • chat:token    ◀──────────────────┼──────────────│  Ollama   │      │ Postgres         │
   • chat:done                         │              │ embed/chat│      │ pgvector         │
   • chat:error                        │              │ (stream)  │─────▶│ Embedding (768d) │
                                       │              └───────────┘      │ cosine top-5     │

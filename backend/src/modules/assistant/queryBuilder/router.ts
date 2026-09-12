@@ -116,7 +116,7 @@ export async function tryAnalytics(
   question: string,
   history: { role: string; content: string }[] = [],
   progress?: ChatProgress
-): Promise<{ answer: string; sources: any[] } | null> {
+): Promise<{ answer: string; sources: any[]; decode: any } | null> {
   // 1. Classify
   progress?.stage('understanding');
   const intent = await classify(question);
@@ -141,6 +141,12 @@ export async function tryAnalytics(
     return {
       answer,
       sources: [{ sourceType: 'analytics', content: 'Structured database query' }],
+      decode: {
+        "step_1:intent": intent,
+        "step_2:query": query,
+        "step_3:result": result,
+        "step_4:answer": answer
+      }
     };
   } catch (error) {
     if (error instanceof QueryValidationError) {
