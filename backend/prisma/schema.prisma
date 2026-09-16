@@ -25,17 +25,45 @@ model Embedding {
 // ─────────────────────────────────────────────
 // Auth (staff/admin accounts — separate from Student/Teacher domain records)
 // ─────────────────────────────────────────────
-enum Role {
-  ADMIN
-  STAFF
-}
 
 model User {
   id        Int      @id @default(autoincrement())
   name      String
   email     String   @unique
   password  String
-  role      Role     @default(STAFF)
+  // Title of the user's role, i.e. Role.title ("ADMIN", "STAFF", ...)
+  role      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────────────────────────
+// Dynamic RBAC — roles, modules and permissions
+// Modules + permissions are seeded; admins may add/edit roles only.
+// ─────────────────────────────────────────────
+model Role {
+  id              Int           @id @default(autoincrement())
+  title           String        @unique
+  modulesIds      Int[]         @default([])
+  permissionIds   Int[]         @default([])
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+}
+
+model Module {
+  id             Int          @id @default(autoincrement())
+  title          String       @unique
+  parentModuleId Int?
+  parent         Module?      @relation("ModuleToModule", fields: [parentModuleId], references: [id], onDelete: SetNull, onUpdate: Cascade)
+  children       Module[]     @relation("ModuleToModule")
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+}
+
+model Permission {
+  id        Int      @id @default(autoincrement())
+  key       String   
+  moduleId  Int?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }

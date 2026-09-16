@@ -5,8 +5,11 @@ import { seedAuth } from './seed/auth.seed';
 import { seedLibrary } from './seed/library.seed';
 import { seedOperations } from './seed/operations.seed';
 import { seedProgress } from './seed/progress.seed';
+import seedRbac from './seed/rbac.seed';
 
 async function main() {
+  // Roles must exist before the staff accounts that reference them by title.
+  await seedRbac();
   await seedAuth();
   const academic = await seedAcademic();
 
