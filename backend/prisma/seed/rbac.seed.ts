@@ -142,7 +142,7 @@ export default async function seedRbac() {
   console.log('🌱 Seeding RBAC...');
 
   // Seed roles
-  const roles = ['admin'];
+  const roles = ['admin', 'staff'];
 
   await Promise.all(
     roles.map((title) =>
