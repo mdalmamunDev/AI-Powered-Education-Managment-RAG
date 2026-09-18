@@ -11,7 +11,7 @@ import {
 const router = express.Router();
 
 router.use(auth());
-router.get('/', getAllDepartments);
+router.get('/', auth('department.read'), getAllDepartments);
 router.get('/:id', getDepartmentById);
 router.post('/', createDepartment);
 router.put('/:id', updateDepartment);
