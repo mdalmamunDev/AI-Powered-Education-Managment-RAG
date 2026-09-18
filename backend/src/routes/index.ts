@@ -22,6 +22,9 @@ import { LibraryBookRoutes } from '../modules/library-book/library-book.routes';
 import { BookLoanRoutes } from '../modules/book-loan/book-loan.routes';
 import { AssistantRoutes } from '../modules/assistant/assistant.routes';
 import { DashboardRoutes } from '../modules/dashboard/dashboard.routes';
+import { ModuleRoutes } from '../modules/rbac/module/module.routes';
+import { RoleRoutes } from '../modules/rbac/role/role.routes';
+import { RbacRoutes } from '../modules/rbac/rbac.routes';
 
 const router = express.Router();
 
@@ -49,6 +52,9 @@ const apiRoutes = [
   { path: '/book-loans', route: BookLoanRoutes },
   { path: '/assistant', route: AssistantRoutes },
   { path: '/dashboard', route: DashboardRoutes },
+  { path: '/modules', route: ModuleRoutes },
+  { path: '/roles', route: RoleRoutes },
+  { path: '/rbac', route: RbacRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

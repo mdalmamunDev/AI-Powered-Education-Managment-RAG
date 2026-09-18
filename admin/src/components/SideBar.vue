@@ -108,6 +108,7 @@ export default {
             { label: "Change Password", path: "/change-password", icon: "session-management" },
           ]
         },
+        { label: "RBAC", path: "/rbac", icon: "dashboard" },
       ],
     };
   },

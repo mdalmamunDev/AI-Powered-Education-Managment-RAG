@@ -31,6 +31,9 @@ import AdvisementPage from "@/pages/AdvisementPage.vue";
 import LibraryBookPage from "@/pages/LibraryBookPage.vue";
 import BookLoanPage from "@/pages/BookLoanPage.vue";
 
+// RBAC
+import RbacPage from "@/pages/RbacPage.vue";
+
 // Settings
 import ProfilePage from "@/pages/settings/ProfilePage.vue";
 import ChangePassPage from "@/pages/settings/ChangePassPage.vue";
@@ -87,6 +90,9 @@ const routes = [
       // Settings
       { path: "profile", component: ProfilePage, meta: { title: "Profile", dataUrl: "auth/me" } },
       { path: "change-password", component: ChangePassPage, meta: { title: "Change Password", dataUrl: "auth/change-password" } },
+
+      // RBAC
+      { path: "rbac", component: RbacPage, meta: { title: "RBAC", dataUrl: "rbac" } },
     ]
   },
 

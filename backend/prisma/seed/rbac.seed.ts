@@ -9,86 +9,158 @@ const DEFAULT_PERMISSIONS = [
 
 type ModuleData = {
   title: string;
+  key: string;
   permissions?: string[];
   children?: ModuleData[];
 };
 
 const moduleTree: ModuleData[] = [
   {
-    title: 'dashboard',
+    title: 'Dashboard',
+    key: 'dashboard',
     permissions: ['read'],
   },
-
   {
-    title: 'academics',
+    title: 'Academics',
+    key: 'academics',
     permissions: [],
     children: [
       {
-        title: 'department',
-        permissions: ['create', 'read', 'update', 'delete'],
+        title: 'Department',
+        key: 'department',
       },
       {
-        title: 'semester',
-        permissions: ['create', 'read', 'update', 'delete'],
+        title: 'Semester',
+        key: 'semester',
       },
     ],
   },
-
   {
-    title: 'people',
+    title: 'People',
+    key: 'people',
     permissions: [],
     children: [
-      { title: 'teacher' },
-      { title: 'student' },
-      { title: 'guardian' },
-      { title: 'student-guardian' },
+      {
+        title: 'Teacher',
+        key: 'teacher',
+      },
+      {
+        title: 'Student',
+        key: 'student',
+      },
+      {
+        title: 'Guardian',
+        key: 'guardian',
+      },
+      {
+        title: 'Student Guardian',
+        key: 'student-guardian',
+      },
     ],
   },
-
   {
-    title: 'academic',
+    title: 'Academic',
+    key: 'academic',
     permissions: [],
     children: [
-      { title: 'course' },
-      { title: 'enrollment' },
-      { title: 'attendance' },
-      { title: 'grade' },
-      { title: 'assignment' },
-      { title: 'submission' },
-      { title: 'exam' },
+      {
+        title: 'Course',
+        key: 'course',
+      },
+      {
+        title: 'Enrollment',
+        key: 'enrollment',
+      },
+      {
+        title: 'Attendance',
+        key: 'attendance',
+      },
+      {
+        title: 'Grade',
+        key: 'grade',
+      },
+      {
+        title: 'Assignment',
+        key: 'assignment',
+      },
+      {
+        title: 'Submission',
+        key: 'submission',
+      },
+      {
+        title: 'Exam',
+        key: 'exam',
+      },
     ],
   },
-
   {
-    title: 'administration',
+    title: 'Administration',
+    key: 'administration',
     permissions: [],
     children: [
-      { title: 'classroom' },
-      { title: 'schedule' },
-      { title: 'payment' },
-      { title: 'office-hour' },
-      { title: 'advisement' },
+      {
+        title: 'Classroom',
+        key: 'classroom',
+      },
+      {
+        title: 'Schedule',
+        key: 'schedule',
+      },
+      {
+        title: 'Payment',
+        key: 'payment',
+      },
+      {
+        title: 'Office Hour',
+        key: 'office-hour',
+      },
+      {
+        title: 'Advisement',
+        key: 'advisement',
+      },
     ],
   },
-
   {
-    title: 'library',
+    title: 'Library',
+    key: 'library',
     permissions: [],
     children: [
-      { title: 'library-book' },
-      { title: 'book-loan' },
+      {
+        title: 'Library Book',
+        key: 'library-book',
+      },
+      {
+        title: 'Book Loan',
+        key: 'book-loan',
+      },
     ],
   },
-
   {
-    title: 'settings',
+    title: 'Settings',
+    key: 'settings',
     permissions: [],
     children: [
-      { title: 'role' },
-      { title: 'module' },
-      { title: 'permission' },
-      { title: 'user' },
-      { title: 'assistant' },
+      {
+        title: 'Role',
+        key: 'role',
+      },
+      {
+        title: 'Module',
+        key: 'module',
+      },
+      {
+        title: 'Permission',
+        key: 'permission',
+      },
+      {
+        title: 'User',
+        key: 'user',
+      },
+      {
+        title: 'Assistant',
+        key: 'assistant',
+        permissions: ['read']
+      },
     ],
   },
 ];
@@ -101,13 +173,15 @@ async function seedModules(
     // Create/update module
     const module = await prisma.module.upsert({
       where: {
-        title: moduleData.title,
+        key: moduleData.key,
       },
       update: {
         parentModuleId: parentId ?? null,
+        title: moduleData.title,
       },
       create: {
         title: moduleData.title,
+        key: moduleData.key,
         parentModuleId: parentId ?? null,
       },
     });
@@ -121,7 +195,7 @@ async function seedModules(
     if (permissions.length > 0) {
       await prisma.permission.createMany({
         data: permissions.map((permission) => ({
-          key: `${moduleData.title}.${permission}`,
+          key: `${moduleData.key}.${permission}`,
           moduleId: module.id,
         })),
         skipDuplicates: true,
