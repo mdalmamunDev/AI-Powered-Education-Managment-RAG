@@ -1,5 +1,5 @@
 <template>
-  <div class="max-w-6xl mx-auto space-y-6">
+  <div class="space-y-6">
     <!-- Heading + selected role -->
     <div class="flex flex-wrap items-end justify-between gap-4 px-2">
       <div>
@@ -60,17 +60,17 @@
         </thead>
 
         <tbody class="divide-y divide-gray-600">
-          <tr v-for="row in rows" :key="row.module.id" :class="row.isGroup ? 'bg-2' : ''">
+          <tr v-for="row in rows" :key="row.module.id" :class="row.isGroup ? 'bg-3' : 'bg-4'">
             <!-- Module title: group rows are bold, children are indented -->
-            <td class="my-td-1st" :class="row.depth ? 'ps-12' : ''">
-              <span :class="row.isGroup ? 'font-semibold text-main' : ''">{{ row.module.title }}</span>
+            <td class="my-td-1st p-1" :class="row.depth ? 'ps-12' : 'ps-3'">
+              <span class="text-xs" :class="row.isGroup ? 'font-semibold text-main' : ''">{{ row.module.title }}</span>
               <span v-if="row.isGroup" class="text-xs text-gray-300 ms-2">
                 ({{ row.module.children.length }} modules)
               </span>
             </td>
 
             <!-- Action cells -->
-            <td v-for="action in actions" :key="action.key" class="my-td">
+            <td v-for="action in actions" :key="action.key" class="my-td p-1">
               <input v-if="isAvailable(row.module, action.key)" type="checkbox" class="my-check cursor-pointer"
                 :checked="isChecked(row.module, action.key)"
                 :indeterminate.prop="isIndeterminate(row.module, action.key)"
@@ -342,7 +342,7 @@ export default {
         },
         callback: () => {
           this.saving = false;
-          // this.fetchRbac();
+          this.fetchRbac();
         },
         errorCallback: () => { this.saving = false; },
       });

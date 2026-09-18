@@ -6,6 +6,47 @@ import { prisma } from '../../../../prisma/prisma';
 
 
 
+// GET /roles — paginated list used by the Roles admin page. Each row carries
+// `permissionCount` (granted permissions) and `userCount` (accounts currently
+// assigned this role title) so the UI can show why a role cannot be deleted.
+export const getAllRoles = catchAsync(async (req: any, res: any) => {
+  const { page, limit, skip, take, sortBy = 'createdAt', sortOrder = 'desc' } = getPagination(req.query);
+  const search = req.query.search as string | undefined;
+
+  const where = search
+    ? { title: { contains: search, mode: 'insensitive' as const } }
+    : {};
+
+  const [items, totalCount, userCounts] = await Promise.all([
+    prisma.role.findMany({
+      where,
+      skip,
+      take,
+      orderBy: { [sortBy]: sortOrder },
+    }),
+    prisma.role.count({ where }),
+    // User.role stores the role title as a plain string (no FK), so assigned
+    // accounts are counted by that title.
+    prisma.user.groupBy({ by: ['role'], _count: { _all: true } }),
+  ]);
+
+  const usersByTitle = new Map<string, number>(
+    userCounts.map((entry) => [entry.role, entry._count._all]),
+  );
+
+  const data = items.map((role) => ({
+    ...role,
+    permissionCount: (role.permissionKeys || []).length,
+    userCount: usersByTitle.get(role.title) || 0,
+  }));
+
+  sendResponse(res, {
+    code: StatusCodes.OK,
+    data,
+    pagination: buildPaginationMeta(totalCount, page, limit),
+  });
+});
+
 // Body is already validated + trimmed by validate(createRoleSchema) in routes.
 export const createRole = catchAsync(async (req: any, res: any) => {
   const { title } = req.body;

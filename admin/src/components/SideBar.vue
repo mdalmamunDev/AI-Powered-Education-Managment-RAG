@@ -108,7 +108,12 @@ export default {
             { label: "Change Password", path: "/change-password", icon: "session-management" },
           ]
         },
-        { label: "RBAC", path: "/rbac", icon: "dashboard" },
+        {
+          label: "Access Control", icon: "permissions", children: [
+            { label: "RBAC", path: "/rbac", icon: "permissions" },
+            { label: "Roles", path: "/roles", icon: "manage-teams" },
+          ]
+        },
       ],
     };
   },
