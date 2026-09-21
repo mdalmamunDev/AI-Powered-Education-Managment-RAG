@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllGrades);
-router.get('/:id', getGradeById);
-router.post('/', createGrade);
-router.put('/:id', updateGrade);
-router.delete('/:id', deleteGrade);
+router.get('/', auth('grade.read'), getAllGrades);
+router.get('/:id', auth('grade.read'), getGradeById);
+router.post('/', auth('grade.create'), createGrade);
+router.put('/:id', auth('grade.update'), updateGrade);
+router.delete('/:id', auth('grade.delete'), deleteGrade);
 
 export const GradeRoutes = router;

@@ -5,6 +5,6 @@ import { ask } from './assistant.controller';
 
 const router = express.Router();
 
-router.post('/ask', auth(), ask);
+router.post('/ask', auth('assistant.read'), ask);
 
 export const AssistantRoutes = router;

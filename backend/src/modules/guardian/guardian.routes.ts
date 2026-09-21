@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllGuardians);
-router.get('/:id', getGuardianById);
-router.post('/', createGuardian);
-router.put('/:id', updateGuardian);
-router.delete('/:id', deleteGuardian);
+router.get('/', auth('guardian.read'), getAllGuardians);
+router.get('/:id', auth('guardian.read'), getGuardianById);
+router.post('/', auth('guardian.create'), createGuardian);
+router.put('/:id', auth('guardian.update'), updateGuardian);
+router.delete('/:id', auth('guardian.delete'), deleteGuardian);
 
 export const GuardianRoutes = router;

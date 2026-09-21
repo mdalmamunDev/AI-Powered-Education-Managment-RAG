@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllOfficeHours);
-router.get('/:id', getOfficeHourById);
-router.post('/', createOfficeHour);
-router.put('/:id', updateOfficeHour);
-router.delete('/:id', deleteOfficeHour);
+router.get('/', auth('office-hour.read'), getAllOfficeHours);
+router.get('/:id', auth('office-hour.read'), getOfficeHourById);
+router.post('/', auth('office-hour.create'), createOfficeHour);
+router.put('/:id', auth('office-hour.update'), updateOfficeHour);
+router.delete('/:id', auth('office-hour.delete'), deleteOfficeHour);
 
 export const OfficeHourRoutes = router;

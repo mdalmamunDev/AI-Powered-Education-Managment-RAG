@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllStudents);
-router.get('/:id', getStudentById);
-router.post('/', createStudent);
-router.put('/:id', updateStudent);
-router.delete('/:id', deleteStudent);
+router.get('/', auth('student.read'), getAllStudents);
+router.get('/:id', auth('student.read'), getStudentById);
+router.post('/', auth('student.create'), createStudent);
+router.put('/:id', auth('student.update'), updateStudent);
+router.delete('/:id', auth('student.delete'), deleteStudent);
 
 export const StudentRoutes = router;

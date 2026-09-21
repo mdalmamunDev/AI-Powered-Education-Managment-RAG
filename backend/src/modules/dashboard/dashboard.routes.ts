@@ -4,7 +4,6 @@ import { getDashboardData } from './dashboard.controller';
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getDashboardData);
+router.get('/', auth('dashboard.read'), getDashboardData);
 
 export const DashboardRoutes = router;

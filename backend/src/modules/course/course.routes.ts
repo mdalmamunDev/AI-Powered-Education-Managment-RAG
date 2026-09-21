@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllCourses);
-router.get('/:id', getCourseById);
-router.post('/', createCourse);
-router.put('/:id', updateCourse);
-router.delete('/:id', deleteCourse);
+router.get('/', auth('course.read'), getAllCourses);
+router.get('/:id', auth('course.read'), getCourseById);
+router.post('/', auth('course.create'), createCourse);
+router.put('/:id', auth('course.update'), updateCourse);
+router.delete('/:id', auth('course.delete'), deleteCourse);
 
 export const CourseRoutes = router;

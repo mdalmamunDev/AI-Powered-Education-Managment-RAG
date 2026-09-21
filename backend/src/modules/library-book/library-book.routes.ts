@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllLibraryBooks);
-router.get('/:id', getLibraryBookById);
-router.post('/', createLibraryBook);
-router.put('/:id', updateLibraryBook);
-router.delete('/:id', deleteLibraryBook);
+router.get('/', auth('library-book.read'), getAllLibraryBooks);
+router.get('/:id', auth('library-book.read'), getLibraryBookById);
+router.post('/', auth('library-book.create'), createLibraryBook);
+router.put('/:id', auth('library-book.update'), updateLibraryBook);
+router.delete('/:id', auth('library-book.delete'), deleteLibraryBook);
 
 export const LibraryBookRoutes = router;

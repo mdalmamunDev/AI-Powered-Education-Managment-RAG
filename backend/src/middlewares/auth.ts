@@ -5,10 +5,11 @@ import catchAsync from '../helpers/catchAsync';
 import ApiError from '../helpers/ApiError';
 import { prisma } from '../../prisma/prisma';
 import { getPermissionsByRole } from '../modules/rbac/role/role.service';
+import { TPermission } from '../modules/rbac/permission/permission.types';
 
 // Usage: auth() for any logged-in user, auth('department.read') to also require
 // a permission key (several keys are alternatives — any one of them passes).
-const auth = (...permissions: string[]) =>
+const auth = (...permissions: TPermission[]) =>
   catchAsync(async (req: any, res: Response, next: NextFunction) => {
     const tokenWithBearer = req.headers.authorization;
     if (!tokenWithBearer || !tokenWithBearer.startsWith('Bearer ')) {

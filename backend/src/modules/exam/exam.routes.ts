@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllExams);
-router.get('/:id', getExamById);
-router.post('/', createExam);
-router.put('/:id', updateExam);
-router.delete('/:id', deleteExam);
+router.get('/', auth('exam.read'), getAllExams);
+router.get('/:id', auth('exam.read'), getExamById);
+router.post('/', auth('exam.create'), createExam);
+router.put('/:id', auth('exam.update'), updateExam);
+router.delete('/:id', auth('exam.delete'), deleteExam);
 
 export const ExamRoutes = router;

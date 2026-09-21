@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllAssignments);
-router.get('/:id', getAssignmentById);
-router.post('/', createAssignment);
-router.put('/:id', updateAssignment);
-router.delete('/:id', deleteAssignment);
+router.get('/', auth('assignment.read'), getAllAssignments);
+router.get('/:id', auth('assignment.read'), getAssignmentById);
+router.post('/', auth('assignment.create'), createAssignment);
+router.put('/:id', auth('assignment.update'), updateAssignment);
+router.delete('/:id', auth('assignment.delete'), deleteAssignment);
 
 export const AssignmentRoutes = router;

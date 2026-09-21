@@ -4,9 +4,8 @@ import { getAllModules, getModuleById, updateModule } from './module.controller'
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllModules);
-router.get('/:id', getModuleById);
-router.put('/:id', updateModule);
+router.get('/', auth('module.read'), getAllModules);
+router.get('/:id', auth('module.read'), getModuleById);
+router.put('/:id', auth('module.update'), updateModule);
 
 export const ModuleRoutes = router;

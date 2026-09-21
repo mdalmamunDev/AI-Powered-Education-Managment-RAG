@@ -9,12 +9,10 @@ import {
 } from './enrollment.controller';
 
 const router = express.Router();
-
-router.use(auth());
-router.get('/', getAllEnrollments);
-router.get('/:id', getEnrollmentById);
-router.post('/', createEnrollment);
-router.put('/:id', updateEnrollment);
-router.delete('/:id', deleteEnrollment);
+router.get('/', auth('enrollment.read'), getAllEnrollments);
+router.get('/:id', auth('enrollment.read'), getEnrollmentById);
+router.post('/', auth('enrollment.create'), createEnrollment);
+router.put('/:id', auth('enrollment.update'), updateEnrollment);
+router.delete('/:id', auth('enrollment.delete'), deleteEnrollment);
 
 export const EnrollmentRoutes = router;

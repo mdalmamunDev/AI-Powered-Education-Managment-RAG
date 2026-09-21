@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllStudentGuardianLinks);
-router.get('/:id', getStudentGuardianLinkById);
-router.post('/', createStudentGuardianLink);
-router.put('/:id', updateStudentGuardianLink);
-router.delete('/:id', deleteStudentGuardianLink);
+router.get('/', auth('student-guardian.read'), getAllStudentGuardianLinks);
+router.get('/:id', auth('student-guardian.read'), getStudentGuardianLinkById);
+router.post('/', auth('student-guardian.create'), createStudentGuardianLink);
+router.put('/:id', auth('student-guardian.update'), updateStudentGuardianLink);
+router.delete('/:id', auth('student-guardian.delete'), deleteStudentGuardianLink);
 
 export const StudentGuardianLinkRoutes = router;

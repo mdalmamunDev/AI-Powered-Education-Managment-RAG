@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllSubmissions);
-router.get('/:id', getSubmissionById);
-router.post('/', createSubmission);
-router.put('/:id', updateSubmission);
-router.delete('/:id', deleteSubmission);
+router.get('/', auth('submission.read'), getAllSubmissions);
+router.get('/:id', auth('submission.read'), getSubmissionById);
+router.post('/', auth('submission.create'), createSubmission);
+router.put('/:id', auth('submission.update'), updateSubmission);
+router.delete('/:id', auth('submission.delete'), deleteSubmission);
 
 export const SubmissionRoutes = router;

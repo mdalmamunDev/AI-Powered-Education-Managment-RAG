@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllBookLoans);
-router.get('/:id', getBookLoanById);
-router.post('/', createBookLoan);
-router.put('/:id', updateBookLoan);
-router.delete('/:id', deleteBookLoan);
+router.get('/', auth('book-loan.read'), getAllBookLoans);
+router.get('/:id', auth('book-loan.read'), getBookLoanById);
+router.post('/', auth('book-loan.create'), createBookLoan);
+router.put('/:id', auth('book-loan.update'), updateBookLoan);
+router.delete('/:id', auth('book-loan.delete'), deleteBookLoan);
 
 export const BookLoanRoutes = router;

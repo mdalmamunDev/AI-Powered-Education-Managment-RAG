@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllSchedules);
-router.get('/:id', getScheduleById);
-router.post('/', createSchedule);
-router.put('/:id', updateSchedule);
-router.delete('/:id', deleteSchedule);
+router.get('/', auth('schedule.read'), getAllSchedules);
+router.get('/:id', auth('schedule.read'), getScheduleById);
+router.post('/', auth('schedule.create'), createSchedule);
+router.put('/:id', auth('schedule.update'), updateSchedule);
+router.delete('/:id', auth('schedule.delete'), deleteSchedule);
 
 export const ScheduleRoutes = router;

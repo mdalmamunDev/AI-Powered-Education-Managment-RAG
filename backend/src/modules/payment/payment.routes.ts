@@ -10,11 +10,10 @@ import {
 
 const router = express.Router();
 
-router.use(auth());
-router.get('/', getAllPayments);
-router.get('/:id', getPaymentById);
-router.post('/', createPayment);
-router.put('/:id', updatePayment);
-router.delete('/:id', deletePayment);
+router.get('/', auth('payment.read'), getAllPayments);
+router.get('/:id', auth('payment.read'), getPaymentById);
+router.post('/', auth('payment.create'), createPayment);
+router.put('/:id', auth('payment.update'), updatePayment);
+router.delete('/:id', auth('payment.delete'), deletePayment);
 
 export const PaymentRoutes = router;
