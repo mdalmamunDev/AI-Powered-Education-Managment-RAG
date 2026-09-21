@@ -3,6 +3,7 @@ import { sendResponse, getPagination, buildPaginationMeta } from '../../../helpe
 import catchAsync from '../../../helpers/catchAsync';
 import ApiError from '../../../helpers/ApiError';
 import { prisma } from '../../../../prisma/prisma';
+import { removeRedisKey } from '../../../helpers/redis.service';
 
 
 
@@ -67,6 +68,10 @@ export const updateRole = catchAsync(async (req: any, res: any) => {
   if (!existing) throw new ApiError(StatusCodes.NOT_FOUND, 'Role not found.');
 
   const item = await prisma.role.update({ where: { id }, data: {title, moduleKeys, permissionKeys} });
+
+  // manage cache
+  removeRedisKey(`role:${item.title}:*`);
+  
   sendResponse(res, {
     code: StatusCodes.OK,
     message: 'Role updated successfully',
@@ -90,6 +95,9 @@ export const deleteRole = catchAsync(async (req: any, res: any) => {
   }
 
   await prisma.role.delete({ where: { id } });
+    // manage cache
+  removeRedisKey(`role:${item.title}:*`);
+
   sendResponse(res, { code: StatusCodes.OK, message: 'Role deleted successfully' });
 });
 

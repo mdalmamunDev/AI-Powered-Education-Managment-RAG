@@ -9,12 +9,10 @@ import {
 } from './department.controller';
 
 const router = express.Router();
-
-router.use(auth());
 router.get('/', auth('department.read'), getAllDepartments);
-router.get('/:id', getDepartmentById);
-router.post('/', createDepartment);
-router.put('/:id', updateDepartment);
-router.delete('/:id', deleteDepartment);
+router.get('/:id', auth('department.read'), getDepartmentById);
+router.post('/', auth('department.create'), createDepartment);
+router.put('/:id', auth('department.update'), updateDepartment);
+router.delete('/:id', auth('department.delete'), deleteDepartment);
 
 export const DepartmentRoutes = router;

@@ -4,6 +4,7 @@ import jwt, { JwtPayload, Secret } from 'jsonwebtoken';
 import catchAsync from '../helpers/catchAsync';
 import ApiError from '../helpers/ApiError';
 import { prisma } from '../../prisma/prisma';
+import { getPermissionsByRole } from '../modules/rbac/role/role.service';
 
 // Usage: auth() for any logged-in user, auth('department.read') to also require
 // a permission key (several keys are alternatives — any one of them passes).
@@ -30,8 +31,7 @@ const auth = (...permissions: string[]) =>
       // Keep this an exact match: register() lets callers store an arbitrary
       // role title, so a loose (case-insensitive) lookup could hand out
       // permissions the stored role was never granted.
-      const role = await prisma.role.findUnique({ where: { title: user.role } });
-      const granted = new Set(role?.permissionKeys || []);
+      const granted = await getPermissionsByRole(user.role);
 
       const allowed = permissions.some((permission) => granted.has(permission));
       if (!allowed) {
