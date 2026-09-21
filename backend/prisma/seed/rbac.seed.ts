@@ -1,4 +1,5 @@
 import { prisma } from '../prisma';
+import { removeRedisKey } from '../../src/helpers/redis.service';
 
 const DEFAULT_PERMISSIONS = [
   'create',
@@ -141,27 +142,36 @@ const moduleTree: ModuleData[] = [
     permissions: [],
     children: [
       {
+        title: 'Profile',
+        key: 'profile',
+        permissions: ['read', 'update', 'delete']
+      },
+      {
+        title: 'Change Password',
+        key: 'change-password',
+      },
+    ],
+  },
+  {
+    title: 'RBAC',
+    key: 'rbac-group',
+    permissions: [],
+    children: [
+      {
         title: 'Role',
         key: 'role',
       },
       {
-        title: 'Module',
-        key: 'module',
-      },
-      {
-        title: 'Permission',
-        key: 'permission',
-      },
-      {
-        title: 'User',
-        key: 'user',
-      },
-      {
-        title: 'Assistant',
-        key: 'assistant',
+        title: 'RBAC',
+        key: 'rbac',
         permissions: ['read']
       },
     ],
+  },
+  {
+    title: 'Assistant',
+    key: 'assistant',
+    permissions: ['read']
   },
 ];
 
@@ -214,6 +224,27 @@ async function seedModules(
 
 export default async function seedRbac() {
   console.log('🌱 Seeding RBAC...');
+
+  // Wipe previous RBAC data so the seed file is the single source of truth.
+  // Order matters for clarity: permissions reference modules by id, and
+  // Module has a self-relation (parentModuleId) with onDelete: SetNull, so
+  // deleting all rows never violates a constraint.
+  // ⚠️ Deleting roles also wipes their permissionKeys grants — seeded
+  // accounts only reference the 'admin'/'staff' titles, which are recreated
+  // below before seedAuth() runs.
+  await prisma.permission.deleteMany();
+  await prisma.module.deleteMany();
+  await prisma.role.deleteMany();
+  console.log('🧹 Cleared existing roles, modules and permissions');
+
+  // Best-effort: drop cached permission sets (role:<title>:permission-keys),
+  // otherwise a wiped role could keep serving its old grants for up to an hour.
+  try {
+    await removeRedisKey('role:*');
+    console.log('🧹 Cleared cached role permission sets from Redis');
+  } catch {
+    console.log('⚠️ Redis unavailable — skipping permission cache purge');
+  }
 
   // Seed roles
   const roles = ['admin', 'staff'];

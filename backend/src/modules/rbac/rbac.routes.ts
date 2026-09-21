@@ -4,6 +4,6 @@ import { getRbacDash } from './rbac.controller';
 
 const router = express.Router();
 
-router.get('/', auth(), getRbacDash);
+router.get('/', auth('rbac.read'), getRbacDash);
 export const RbacRoutes = router;
 

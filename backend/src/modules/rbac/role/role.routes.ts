@@ -13,7 +13,7 @@ const router = express.Router();
 
 router.get('/', auth('role.read'), getAllRoles);
 router.post('/', validate(createRoleSchema), auth('role.create'), createRole);
-router.put('/:id', auth(), updateRole);
+router.put('/:id', auth('role.update'), updateRole);
 router.delete('/:id', auth('role.delete'), deleteRole);
 
 export const RoleRoutes = router;
