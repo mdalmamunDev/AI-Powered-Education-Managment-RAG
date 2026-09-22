@@ -110,8 +110,9 @@ export default {
         },
         {
           label: "Access Control", icon: "permissions", children: [
-            { label: "RBAC", path: "/rbac", icon: "permissions" },
+            { label: "Users", path: "/users", icon: "coach" },
             { label: "Roles", path: "/roles", icon: "manage-teams" },
+            { label: "RBAC", path: "/rbac", icon: "permissions" },
           ]
         },
       ],

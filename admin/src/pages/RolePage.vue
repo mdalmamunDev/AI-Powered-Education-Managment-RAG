@@ -13,9 +13,11 @@
         </span>
       </td>
       <td class="my-td">
-        <span v-if="item.userCount" class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold">
+        <router-link v-if="item.userCount" :to="{ path: '/users', query: { role: item.title } }"
+          class="bg-blue-600 text-white px-3 py-1 rounded-full text-xs font-semibold hover:opacity-80"
+          title="See the users holding this role">
           {{ item.userCount }} user{{ item.userCount === 1 ? '' : 's' }}
-        </span>
+        </router-link>
         <span v-else class="text-gray-300">Unassigned</span>
       </td>
       <td class="my-td text-gray-300">{{ getDate(item.createdAt) }}</td>

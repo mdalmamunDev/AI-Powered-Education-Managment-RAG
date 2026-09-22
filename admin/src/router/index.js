@@ -34,6 +34,7 @@ import BookLoanPage from "@/pages/BookLoanPage.vue";
 // RBAC
 import RbacPage from "@/pages/RbacPage.vue";
 import RolePage from "@/pages/RolePage.vue";
+import UserPage from "@/pages/UserPage.vue";
 
 // Settings
 import ProfilePage from "@/pages/settings/ProfilePage.vue";
@@ -95,6 +96,7 @@ const routes = [
       // RBAC
       { path: "rbac", component: RbacPage, meta: { title: "RBAC", dataUrl: "rbac" } },
       { path: "roles", component: RolePage, meta: { title: "Role", dataUrl: "roles" } },
+      { path: "users", component: UserPage, meta: { title: "User", dataUrl: "users" } },
     ]
   },
 

@@ -25,6 +25,7 @@ import { DashboardRoutes } from '../modules/dashboard/dashboard.routes';
 import { ModuleRoutes } from '../modules/rbac/module/module.routes';
 import { RoleRoutes } from '../modules/rbac/role/role.routes';
 import { RbacRoutes } from '../modules/rbac/rbac.routes';
+import { UserRoutes } from '../modules/user/user.routes';
 
 const router = express.Router();
 
@@ -55,6 +56,7 @@ const apiRoutes = [
   { path: '/modules', route: ModuleRoutes },
   { path: '/roles', route: RoleRoutes },
   { path: '/rbac', route: RbacRoutes },
+  { path: '/users', route: UserRoutes },
 ];
 
 apiRoutes.forEach((route) => router.use(route.path, route.route));

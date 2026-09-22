@@ -158,6 +158,10 @@ const moduleTree: ModuleData[] = [
     permissions: [],
     children: [
       {
+        title: 'User',
+        key: 'user',
+      },
+      {
         title: 'Role',
         key: 'role',
       },
@@ -265,4 +269,22 @@ export default async function seedRbac() {
   await seedModules(moduleTree);
 
   console.log('✅ Modules and permissions seeded');
+
+  // Grant every seeded permission to the 'admin' role so a freshly seeded
+  // database is usable straight away — the Role/User pages, for instance, each
+  // need their own read key, which only an admin can tick on the RBAC page.
+  // Every other role starts empty and is configured from that page.
+  const adminRole = 'admin';
+  const seededPermissions = await prisma.permission.findMany({ select: { key: true } });
+  const adminPermissionKeys = seededPermissions.map((permission) => permission.key);
+  const adminModuleKeys = [
+    ...new Set(adminPermissionKeys.map((key) => key.slice(0, key.lastIndexOf('.')))),
+  ];
+
+  await prisma.role.update({
+    where: { title: adminRole },
+    data: { moduleKeys: adminModuleKeys, permissionKeys: adminPermissionKeys },
+  });
+
+  console.log(`✅ Granted all ${adminPermissionKeys.length} permissions to the '${adminRole}' role`);
 }

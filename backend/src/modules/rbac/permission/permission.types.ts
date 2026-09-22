@@ -92,4 +92,8 @@ export type TPermission =
   | 'teacher.create'
   | 'teacher.delete'
   | 'teacher.read'
-  | 'teacher.update';
+  | 'teacher.update'
+  | 'user.create'
+  | 'user.delete'
+  | 'user.read'
+  | 'user.update';

@@ -37,6 +37,21 @@ Seed records are grouped under `prisma/seed/` by domain. Add multiple records to
 
 `role` is `ADMIN` or `STAFF`. `auth()` in `middlewares/auth.ts` accepts optional role args, e.g. `auth('ADMIN')`, if you want to lock specific routes down later — currently every resource route just requires `auth()` (any logged-in user).
 
+## Users (accounts, admins & staff)
+
+`/api/v1/users` manages the login accounts themselves — the list shows every admin/staff account with the role title it holds. The list is read-only: roles are changed from the edit modal (`PUT /api/v1/users/:id`). Roles are defined on `/api/v1/roles` and granted permissions on the RBAC page; `User.role` stores `Role.title`.
+
+| Method | Route                   | Notes |
+|--------|-------------------------|-------|
+| GET    | `/api/v1/users`         | Paginated (`?page=&limit=&search=&role=`) — `search` matches name/email/role, `role` filters by title. `extra.roleCounts` returns the accounts per role. |
+| GET    | `/api/v1/users/roles`   | Assignable roles (`{ id, title, permissionCount, userCount }`) for the role dropdowns |
+| GET    | `/api/v1/users/:id`     | Single account (never the password hash) |
+| POST   | `/api/v1/users`         | `{ name, email, password, role? }` — `role` defaults to `staff`; the title must exist in `Role`, otherwise 400 |
+| PUT    | `/api/v1/users/:id`     | Any of `{ name, email, password, role }`. A blank/omitted `password` keeps the current one; a role-only body (`{ role }`) is accepted as well |
+| DELETE | `/api/v1/users/:id`     | Deletes an account; deleting your own account or changing your own role is refused (400) |
+
+Guarded by the `user.read` / `user.create` / `user.update` / `user.delete` permission keys (seeded as `RBAC group -> User` in `prisma/seed/rbac.seed.ts`), with `role.read`/`role.create`/`role.update`/`role.delete`/`rbac.read` accepted as alternatives so databases seeded before those keys existed keep working.
+
 ## Resource endpoints
 
 Every resource below follows the same CRUD shape and requires auth:
