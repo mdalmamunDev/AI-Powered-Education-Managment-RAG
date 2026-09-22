@@ -10,13 +10,13 @@ import seedRbac from './seed/rbac.seed';
 async function main() {
   // Roles must exist before the staff accounts that reference them by title.
   await seedRbac();
-  await seedAuth();
-  const academic = await seedAcademic();
+  // await seedAuth();
+  // const academic = await seedAcademic();
 
-  await seedProgress(academic);
-  await seedOperations(academic);
-  await seedAdvising(academic);
-  await seedLibrary(academic);
+  // await seedProgress(academic);
+  // await seedOperations(academic);
+  // await seedAdvising(academic);
+  // await seedLibrary(academic);
 
   console.log('Seed complete.');
 }

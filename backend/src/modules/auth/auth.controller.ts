@@ -52,3 +52,20 @@ export const me = catchAsync(async (req: any, res: any) => {
     data: { id: req.user.id, name: req.user.name, email: req.user.email, role: req.user.role },
   });
 });
+
+export const updateProfile = catchAsync(async (req: any, res: any) => {
+  const { name, phone, address } = req.query;
+
+  const user = await prisma.user.update({
+    where: { id: req.user.id },
+    data: { name, phone, address },
+  });
+
+  if(!user) throw new ApiError(StatusCodes.NOT_FOUND, 'User not found');
+
+  sendResponse(res, {
+    code: StatusCodes.OK,
+    message: 'Profile updated!',
+    data: user,
+  });
+});
