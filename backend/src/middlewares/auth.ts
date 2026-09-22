@@ -34,7 +34,7 @@ const auth = (...permissions: TPermission[]) =>
       // permissions the stored role was never granted.
       const granted = await getPermissionsByRole(user.role);
 
-      const allowed = permissions.some((permission) => granted.has(permission));
+      const allowed = permissions.every((permission) => granted.has(permission));
       if (!allowed) {
         const requirement =
           permissions.length === 1 ? permissions[0] : `one of ${permissions.join(', ')}`;
