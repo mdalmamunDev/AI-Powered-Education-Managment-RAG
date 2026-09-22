@@ -33,6 +33,10 @@ model User {
   password  String
   // Title of the user's role, i.e. Role.title ("ADMIN", "STAFF", ...)
   role      String
+
+  phone     String?
+  address   String?
+  
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
