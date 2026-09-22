@@ -61,9 +61,31 @@
                   {{ msg.content }}<span v-if="msg.streaming" class="ai-stream-cursor"></span>
                 </div>
 
-                <span v-if="msg.role !== 'user' && msg.sources?.length" class="text-xs text-sub mt-1">
+                <button v-if="msg.role !== 'user' && msg.sources?.length" type="button"
+                  class="ai-sources-toggle" @click="msg.showSources = !msg.showSources"
+                  :aria-expanded="!!msg.showSources">
                   Based on {{ msg.sources.length }} {{ msg.sources.length === 1 ? 'source' : 'sources' }}
-                </span>
+                  <i :class="msg.showSources ? 'fa-solid fa-chevron-up' : 'fa-solid fa-chevron-down'"></i>
+                </button>
+
+                <div v-if="msg.role !== 'user' && msg.sources?.length && msg.showSources"
+                  class="ai-sources-list">
+                  <div v-for="(src, sIndex) in msg.sources" :key="sIndex" class="ai-source-item">
+                    <div class="ai-source-meta">
+                      <span v-if="src.sourceType" class="ai-source-chip" :class="'ai-source-chip--' + src.sourceType">
+                        {{ src.sourceType }}
+                      </span>
+                      <button v-if="src.source && sourceRouteFor(src.source)" type="button"
+                        class="ai-source-name ai-source-name--link" @click="openSource(src)"
+                        :title="'Open ' + src.source">
+                        {{ src.source }} <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                      </button>
+                      <span v-else-if="src.source" class="ai-source-name">{{ src.source }}</span>
+                    </div>
+                    <div v-if="src.content" class="ai-source-content">{{ src.content }}</div>
+                    <div v-if="src.query" class="ai-source-query">{{ JSON.stringify(src.query) }}</div>
+                  </div>
+                </div>
               </div>
             </div>
           </transition-group>
@@ -139,10 +161,11 @@ export default {
       ],
       history: [], // prior turns sent to the backend so follow-ups keep context
       suggestions: [
-        "Top students by GPA",
-        "Students with no attendance today",
-        "Upcoming exams",
-        "Courses with the most enrollments",
+        "How many students are there in total?",
+        "List all courses with more than 3 credit hours",
+        "How many students are enrolled in each course?",
+        "What is the average grade score per course?",
+        "What is the total payment amount by payment method?",
       ],
     };
   },
@@ -326,6 +349,43 @@ export default {
         const area = this.$refs.messages;
         if (area) area.scrollTop = area.scrollHeight;
       });
+    },
+    // Map a backend model/source key (e.g. "course", "libraryBook",
+    // "parentGuardian", "officeHours") to the admin list page, so clicking
+    // the source name opens the matching module. Returns "" when there is no
+    // matching route (then the name renders as plain text).
+    sourceRouteFor(source) {
+      if (!source) return "";
+      const routes = {
+        department: "/departments",
+        semester: "/semesters",
+        teacher: "/teachers",
+        student: "/students",
+        parentGuardian: "/guardians",
+        course: "/courses",
+        enrollment: "/enrollments",
+        attendance: "/attendances",
+        grade: "/grades",
+        assignment: "/assignments",
+        submission: "/submissions",
+        exam: "/exams",
+        classroom: "/classrooms",
+        schedule: "/schedules",
+        payment: "/payments",
+        officeHours: "/office-hours",
+        advisement: "/advisements",
+        libraryBook: "/library-books",
+        bookLoan: "/book-loans",
+      };
+      return routes[source] || routes[String(source).toLowerCase()] || "";
+    },
+    openSource(src = {}) {
+      const path = this.sourceRouteFor(src.source);
+      if (!path) return;
+      // The docked widget sits inside AppLayout next to <router-view>, so
+      // navigate in place; the chat keeps its state while the module page
+      // opens beside it.
+      this.$router.push(path).catch(() => {});
     },
   },
   computed: {
@@ -745,6 +805,105 @@ export default {
 .ai-send:disabled {
   cursor: not-allowed;
   opacity: 0.6;
+}
+
+/* ---------- Sources (collapsible, per answer) ---------- */
+.ai-sources-toggle {
+  margin-top: 0.25rem;
+  padding: 0.15rem 0.6rem;
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  color: var(--text-2);
+  font-size: 0.72rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+.ai-sources-toggle:hover {
+  background: var(--hover);
+  border-color: var(--border-strong);
+  color: var(--text-1);
+}
+.ai-sources-toggle i {
+  font-size: 0.6rem;
+}
+
+.ai-sources-list {
+  margin-top: 0.4rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  max-height: 12rem;
+  overflow-y: auto;
+}
+.ai-source-item {
+  border: 1px solid var(--border);
+  background: var(--bg-surface-2);
+  border-radius: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+.ai-source-meta {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+}
+.ai-source-chip {
+  padding: 0.08rem 0.55rem;
+  border-radius: 9999px;
+  font-size: 0.65rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.ai-source-chip--semantic {
+  background: color-mix(in srgb, #4ade80 18%, transparent);
+  color: #16a34a;
+}
+.ai-source-name {
+  font-weight: 600;
+  color: var(--text-1);
+}
+.ai-source-name--link {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: inherit;
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ai-source-name--link:hover {
+  filter: brightness(1.1);
+}
+.ai-source-name--link i {
+  font-size: 0.6rem;
+}
+.ai-source-content {
+  color: var(--text-1);
+  word-break: break-word;
+}
+.ai-source-query {
+  color: var(--text-2);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.68rem;
+  word-break: break-all;
+  white-space: pre-wrap;
 }
 
 /* Blinking cursor shown while the answer is streaming in */

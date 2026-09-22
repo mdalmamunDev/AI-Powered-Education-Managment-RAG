@@ -140,7 +140,7 @@ export async function tryAnalytics(
 
     return {
       answer,
-      sources: [{ sourceType: 'analytics', content: 'Structured database query' }],
+      sources: [{ sourceType: 'query', source: result.model, content: 'Structured database query', query }],
       decode: {
         "step_1:intent": intent,
         "step_2:query": query,

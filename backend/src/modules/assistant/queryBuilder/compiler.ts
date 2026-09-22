@@ -39,6 +39,7 @@ export interface AnalyticsQuery {
 export interface QueryResult {
   action: string;
   target: string;
+  model: string;
   data: any;
   query: AnalyticsQuery;
 }
@@ -210,7 +211,7 @@ export async function executeQuery(query: AnalyticsQuery): Promise<QueryResult> 
     throw new QueryValidationError(`Unknown action "${action}"`);
   }
 
-  return { action, target: target.name, data, query };
+  return { action, target: target.name, model: target.model, data, query };
 }
 
 async function executeAggregate(

@@ -74,10 +74,16 @@ async function processChatJob(
 
   const answer = await chatStream(messages, (token) => progress.token(token));
 
+  const sources = matches.map((m: any) => ({
+    ...m,
+    sourceType: 'semantic',
+    source: m.sourceType,
+  }));
+
   progress.stage('done');
   emit('chat:done', {
     answer,
-    sources: matches,
+    sources,
     decode: {
       "step_1:sanitized": sanitized,
       "step_2:searchQuestion": searchQuestion,
