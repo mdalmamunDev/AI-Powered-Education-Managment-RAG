@@ -17,6 +17,23 @@ The built-in AI assistant answers questions about your institution — courses, 
 
 ## 1. High-level architecture
 
+### A. Theory Flow
+```mermaid
+flowchart TD
+    A[User Question] --> B[Intent Routing]
+    B --> C[Analytics]
+    B --> D[Semantic]
+    C --> E[Validated Prisma Query]
+    E --> F[Database result]
+    F --> G[LLM formatting]
+    D --> H[Embedding]
+    H --> I[pgvector]
+    I --> J[Context]
+    J --> G
+    G --> K[Answer]
+```
+
+### B. Practical Implementation Flow
 ```mermaid
 flowchart LR
     subgraph Client["Vue 3 Admin Dashboard"]
