@@ -389,7 +389,7 @@ cp .env.example .env      # set DATABASE_URL, REDIS_URL, JWT_SECRET, OLLAMA_*
 npm install
 npm run prisma:migrate    # create schema (incl. the Embedding/pgvector table)
 npm run prisma:generate
-npm run seed              # demo education data (roles, users, courses, ...)
+npx prisma db seed        # demo education data (roles, users, courses, ...)
 npm run rag-seed          # ⭐ build the vector knowledge base
 npm run dev               # REST + Socket.IO on :5000, starts both BullMQ workers
 ```
