@@ -14,7 +14,7 @@
     --border-strong: #d1d5db;
     --accent: #ffc56d;
     --accent-2: #fca402;
-    --accent-soft: rgba(37, 99, 235, 0.08);
+    --accent-soft: rgba(252, 164, 2, 0.14);
     --hover: #f3f4f6;
     --input-bg: #ffffff;
     --input-border: #d1d5db;
@@ -220,8 +220,19 @@ input[type="checkbox"].my-check-2 {
     border: none;
 }
 
+/* Gold CTA reads better with dark label text in light mode */
+html:not([data-theme="dark"]) .btn-g {
+    color: #1f2937;
+}
+
 .btn-g:hover {
     filter: brightness(1.08);
+}
+
+.btn-g:disabled {
+    opacity: 0.75;
+    cursor: not-allowed;
+    filter: none;
 }
 
 /* ---------- Muted-utility remaps (theme-aware instead of fixed grays) ----------
@@ -244,10 +255,41 @@ html:not([data-theme="dark"]) .logout-item img {
     filter: brightness(0);
 }
 
-/* Auth illustrations use near-white (#F6F6F6) shapes that wash out on the
-   light page background — give them a soft shadow so they stay visible. */
+/* ---------- Auth layout ---------- */
+.auth-shell {
+    background: var(--bg-page);
+}
+
+html:not([data-theme="dark"]) .auth-shell {
+    background: linear-gradient(165deg, #fbfaf8 0%, #f3efe9 50%, #f7edd9 100%);
+}
+
+.auth-logo-plate {
+    width: 100%;
+    max-width: 420px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 html:not([data-theme="dark"]) .auth-illustration {
-    filter: drop-shadow(0 2px 6px rgba(15, 23, 42, 0.18));
+    filter: drop-shadow(0 8px 18px rgba(15, 23, 42, 0.08));
+}
+
+.auth-form-panel {
+    width: 100%;
+}
+
+html:not([data-theme="dark"]) .auth-form-panel {
+    background: #ffffff;
+    border: 1px solid var(--border);
+    border-radius: 1.25rem;
+    padding: 2rem 1.75rem;
+    box-shadow: 0 14px 40px rgba(15, 23, 42, 0.06);
+}
+
+html[data-theme="dark"] .auth-form-panel {
+    padding: 0.25rem 0;
 }
 
 /* ---------- Ant Design (pagination + selects) theming ---------- */
