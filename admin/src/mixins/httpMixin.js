@@ -54,9 +54,10 @@ export default {
       }
     },
 
-    httpReq({ url = false, customUrl = false, urlSuffix = false, method = 'post', callback = false, errorCallback = false, data = false, token = false }) {
+    httpReq({ url = false, customUrl = false, urlSuffix = false, method = 'post', callback = false, errorCallback = false, data = false, token = false, loading = null } = {}) {
       const _this = this;
-      // Attach authentication token if available
+      // Show ActionButton spinner for mutating requests by default; skip for GETs / background fetches
+      const showLoading = loading === null ? String(method).toLowerCase() !== 'get' : !!loading;
 
       if (!token) {
         token = localStorage.getItem('token');
@@ -66,6 +67,10 @@ export default {
         Axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
       } else {
         delete Axios.defaults.headers.common['Authorization'];
+      }
+
+      if (showLoading && this.$store) {
+        this.$store.commit('setIsLoading', true);
       }
 
       Axios({
@@ -91,6 +96,11 @@ export default {
           }
           const message = error.response?.data?.message || error.message || 'Something went wrong!';
           _this.showToast(message, 'error');
+        })
+        .finally(function () {
+          if (showLoading && _this.$store) {
+            _this.$store.commit('setIsLoading', false);
+          }
         });
     },
 
